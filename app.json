@@ -1,0 +1,62 @@
+{
+  "expo": {
+    "name": "Baby Tracker",
+    "slug": "baby-tracker",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.babytracker.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Baby Tracker needs camera access to take photos and videos of your baby.",
+        "NSPhotoLibraryUsageDescription": "Baby Tracker needs photo library access to select photos and videos.",
+        "NSMicrophoneUsageDescription": "Baby Tracker needs microphone access to record videos.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "package": "com.babytracker.app",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": [
+      "expo-web-browser",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Baby Tracker accesses your photos to upload baby memories.",
+          "cameraPermission": "Baby Tracker needs camera to capture baby moments."
+        }
+      ]
+    ],
+    "scheme": "babytracker",
+    "extra": {
+      "eas": {
+        "projectId": "d99a1979-3415-4c15-939a-966ffed1567f"
+      }
+    },
+    "owner": "ankurs-organization"
+  }
+}
