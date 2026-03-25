@@ -114,8 +114,9 @@ export default function HomeScreen({ navigation }: any) {
   const isToday = selectedDate === formatDate(new Date());
 
   return (
+    <View style={styles.container}>
     <ScrollView
-      style={styles.container}
+      style={styles.scrollContainer}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
       {/* Header */}
@@ -303,8 +304,17 @@ export default function HomeScreen({ navigation }: any) {
         </>
       )}
 
-      <View style={{ height: 30 }} />
+      <View style={{ height: 80 }} />
     </ScrollView>
+
+    {/* Quick Entry FAB */}
+    <TouchableOpacity
+      style={styles.chatFab}
+      onPress={() => navigation.navigate('Chat')}
+    >
+      <Ionicons name="chatbubble-ellipses" size={24} color="#fff" />
+    </TouchableOpacity>
+  </View>
   );
 }
 
@@ -312,6 +322,25 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
+  },
+  scrollContainer: {
+    flex: 1,
+  },
+  chatFab: {
+    position: 'absolute',
+    bottom: 24,
+    right: 20,
+    backgroundColor: COLORS.primary,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
   },
   header: {
     flexDirection: 'row',

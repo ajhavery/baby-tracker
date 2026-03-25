@@ -15,6 +15,7 @@ import GrowthScreen from './src/screens/GrowthScreen';
 import VaccinationScreen from './src/screens/VaccinationScreen';
 import MediaScreen from './src/screens/MediaScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
+import ChatScreen from './src/screens/ChatScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -88,6 +89,7 @@ function AppContent() {
         <Stack.Screen name="Vaccinations" component={VaccinationScreen} />
         <Stack.Screen name="Media" component={MediaScreen} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
+        <Stack.Screen name="Chat" component={ChatScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
