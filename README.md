@@ -1,20 +1,54 @@
 # Baby Tracker
 
-A personal baby tracking app to log daily feeds, diaper changes, growth parameters, and capture photos/videos — all synced to Google Drive.
+A personal baby tracking app to log daily feeds, diaper changes, growth parameters, daily tasks, vaccinations, and capture photos/videos — all synced to Google Drive.
 
 Built with React Native (Expo) and works as a PWA on any iPhone or Android without needing an App Store listing or Apple Developer account.
 
 ## Features
 
-- **Feed Tracking** — Log expressed milk (mL) and breastfeeding/latching sessions (with duration)
+### Core Tracking
+- **Feed Tracking** — Log expressed milk (mL) and breastfeeding/latching sessions (with start/end time and duration)
 - **Diaper Tracking** — Log urine, potty, or both with timestamp, notes, and optional photo upload to Google Drive
-- **Growth Tracking** — Record weight (kg), height (cm), head circumference (cm) over time
+- **Growth Tracking** — Record weight (kg), height (cm), head circumference (cm) over time with history view
 - **Baby Profile** — Set name, date of birth, gender, blood group
-- **Google Drive Sync** — All data (feeds, diapers, growth, profile) syncs to a `BabyTracker` folder on Google Drive
-- **Photo & Video Upload** — Capture or select photos/videos and upload directly to Google Drive
+
+### Daily Tasks
+- **Recurring tasks** — Create daily tasks like Vitamin D drops, tummy time, iron supplement, massage, bath time
+- **Quick-add suggestions** — Pre-built suggestions for common baby care tasks
+- **Daily check-off** — Tap to mark tasks as done, with timestamp
+- **Progress tracking** — Visual progress bar showing daily completion
+- **Date navigation** — View past days' task completion history
+
+### Vaccination Tracker
+- **Full Indian (IAP) schedule** — 34 vaccines from birth to 6 years
+- **Categories** — Birth, 6 Weeks, 10 Weeks, 14 Weeks, 6 Months, 9 Months, 12 Months, 15 Months, 16-18 Months, 4-6 Years
+- **Status indicators** — Color-coded: green (given), yellow (due now), red (overdue), grey (upcoming)
+- **Detailed records** — Date given, batch number, doctor/hospital name, notes
+- **Auto-detection** — Calculates due/overdue status based on baby's date of birth
+
+### Google Drive Integration
+- **Cloud database** — All data (feeds, diapers, growth, tasks, vaccinations, profile) synced to a `BabyTracker` folder on Google Drive
+- **Two-way sync** — Downloads cloud data, merges by ID, uploads combined result
 - **Auto-sync** — Data automatically pushes to Drive 5 seconds after any change
-- **Offline Support** — Works offline via service worker caching
-- **PWA** — Install on any phone's home screen for a native app experience
+- **Photo & Video Upload** — Capture or select photos/videos and upload directly to Google Drive
+- **Multi-device** — Both parents can use the app on separate phones, syncing via the same Google Drive
+
+### PWA
+- **Installable** — Add to iPhone/Android home screen for a native app experience
+- **Offline support** — Works offline via service worker caching
+- **No app store needed** — No Apple Developer account or Google Play listing required
+
+## Navigation
+
+The app has 5 bottom tabs:
+
+| Tab | Description |
+|-----|-------------|
+| **Home** | Dashboard with daily feed/diaper summary, sync status, quick-add buttons |
+| **Feeds** | Log and view expressed milk and latching sessions |
+| **Diapers** | Log urine/potty with optional photo upload |
+| **Tasks** | Daily recurring tasks with check-off |
+| **More** | Growth tracker, Vaccinations, Photos & Videos, Baby Profile |
 
 ## Setup
 
@@ -26,8 +60,8 @@ Built with React Native (Expo) and works as a PWA on any iPhone or Android witho
 ### Install
 
 ```bash
-git clone <repo-url>
-cd baby-tracker-app
+git clone https://github.com/ajhavery/baby-tracker.git
+cd baby-tracker
 npm install
 ```
 
@@ -150,35 +184,39 @@ Both of you can install it from the same URL and share data via Google Drive syn
 
 ```
 src/
-  types/          # TypeScript interfaces
-  storage/        # AsyncStorage persistence layer
+  types/              # TypeScript interfaces (feeds, diapers, growth, tasks, vaccinations)
+  storage/            # AsyncStorage persistence layer with merge-by-ID sync
   services/
-    googleDrive.ts   # Google OAuth + Drive API
-    syncService.ts   # Two-way data sync
-    autoSync.ts      # Debounced auto-sync after data changes
+    googleDrive.ts    # Google OAuth + Drive API (upload, download, list, delete)
+    syncService.ts    # Two-way data sync (download → merge → upload)
+    autoSync.ts       # Debounced auto-sync after data changes (5s delay)
   screens/
-    HomeScreen.tsx    # Dashboard with daily summary
+    HomeScreen.tsx    # Dashboard with daily summary + sync status
     FeedsScreen.tsx   # Feed logging (expressed milk + latching)
-    DiapersScreen.tsx # Diaper logging with photo upload
+    DiapersScreen.tsx # Diaper logging with photo upload to Drive
+    TasksScreen.tsx   # Daily recurring tasks with check-off + progress
+    MoreScreen.tsx    # Menu linking to Growth, Vaccinations, Media, Profile
     GrowthScreen.tsx  # Growth measurements history
-    ProfileScreen.tsx # Baby profile management
+    VaccinationScreen.tsx # IAP vaccination schedule + records
     MediaScreen.tsx   # Photo/video gallery with Drive upload
+    ProfileScreen.tsx # Baby profile management
   utils/
-    helpers.ts       # Date/time formatting, ID generation
-    platform.ts      # Platform-specific constants
+    helpers.ts        # Date/time formatting, age calculation, ID generation
+    platform.ts       # Platform-specific constants (header padding)
 public/
-  index.html       # PWA shell with meta tags
-  manifest.json    # Web app manifest
-  sw.js            # Service worker for offline support
+  index.html          # PWA shell with meta tags + service worker registration
+  manifest.json       # Web app manifest (name, icons, theme)
+  sw.js               # Service worker for offline caching
 ```
 
 ## Tech Stack
 
 - **React Native** (Expo SDK 55)
 - **TypeScript**
-- **React Navigation** (bottom tabs + stack)
-- **AsyncStorage** (local persistence)
-- **Google Drive REST API** (cloud sync + media storage)
-- **expo-image-picker** (camera + gallery)
-- **expo-auth-session** (Google OAuth)
+- **React Navigation** (bottom tabs + stack navigator)
+- **AsyncStorage** (local cache, with in-memory fallback for Expo Go)
+- **Google Drive REST API v3** (primary cloud database + media storage)
+- **expo-image-picker** (camera + gallery access)
+- **expo-auth-session** (Google OAuth 2.0)
 - **react-native-web** (PWA support)
+- **Service Worker** (offline caching)
