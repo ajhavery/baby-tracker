@@ -39,6 +39,47 @@ export interface BabyProfile {
   photo?: string;
 }
 
+// Daily tasks (recurring)
+export interface DailyTask {
+  id: string;
+  name: string; // e.g. "Vitamin D drops"
+  description?: string;
+  time?: string; // suggested time HH:mm
+  active: boolean; // can be deactivated without deleting
+  createdDate: string;
+}
+
+export interface TaskCompletion {
+  id: string;
+  taskId: string;
+  date: string; // YYYY-MM-DD
+  time: string; // HH:mm when completed
+  notes?: string;
+}
+
+// Vaccination tracker
+export interface Vaccine {
+  id: string;
+  name: string;
+  description?: string;
+  scheduledWeek?: number; // weeks after birth
+  scheduledMonth?: number; // months after birth
+  doseNumber?: number;
+  category?: string; // e.g. "Birth", "6 Weeks", "10 Weeks"
+}
+
+export interface VaccinationRecord {
+  id: string;
+  vaccineId: string;
+  vaccineName: string;
+  dateGiven: string;
+  batchNumber?: string;
+  administeredBy?: string;
+  location?: string;
+  notes?: string;
+  nextDueDate?: string;
+}
+
 export interface DailySummary {
   date: string;
   totalExpressedMl: number;

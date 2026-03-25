@@ -9,9 +9,12 @@ import { Ionicons } from '@expo/vector-icons';
 import HomeScreen from './src/screens/HomeScreen';
 import FeedsScreen from './src/screens/FeedsScreen';
 import DiapersScreen from './src/screens/DiapersScreen';
+import TasksScreen from './src/screens/TasksScreen';
+import MoreScreen from './src/screens/MoreScreen';
 import GrowthScreen from './src/screens/GrowthScreen';
-import ProfileScreen from './src/screens/ProfileScreen';
+import VaccinationScreen from './src/screens/VaccinationScreen';
 import MediaScreen from './src/screens/MediaScreen';
+import ProfileScreen from './src/screens/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -33,11 +36,11 @@ function HomeTabs() {
             case 'Diapers':
               iconName = focused ? 'layers' : 'layers-outline';
               break;
-            case 'Growth':
-              iconName = focused ? 'trending-up' : 'trending-up-outline';
+            case 'Tasks':
+              iconName = focused ? 'checkmark-circle' : 'checkmark-circle-outline';
               break;
-            case 'Media':
-              iconName = focused ? 'camera' : 'camera-outline';
+            case 'More':
+              iconName = focused ? 'grid' : 'grid-outline';
               break;
           }
           return <Ionicons name={iconName} size={size} color={color} />;
@@ -69,8 +72,8 @@ function HomeTabs() {
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Feeds" component={FeedsScreen} />
       <Tab.Screen name="Diapers" component={DiapersScreen} />
-      <Tab.Screen name="Growth" component={GrowthScreen} />
-      <Tab.Screen name="Media" component={MediaScreen} />
+      <Tab.Screen name="Tasks" component={TasksScreen} />
+      <Tab.Screen name="More" component={MoreScreen} />
     </Tab.Navigator>
   );
 }
@@ -81,6 +84,9 @@ function AppContent() {
       <StatusBar style="dark" />
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="MainTabs" component={HomeTabs} />
+        <Stack.Screen name="Growth" component={GrowthScreen} />
+        <Stack.Screen name="Vaccinations" component={VaccinationScreen} />
+        <Stack.Screen name="Media" component={MediaScreen} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
       </Stack.Navigator>
     </NavigationContainer>
@@ -88,7 +94,6 @@ function AppContent() {
 }
 
 export default function App() {
-  // On web desktop, constrain to phone-width for native feel
   if (Platform.OS === 'web') {
     return (
       <View style={webStyles.outer}>
@@ -98,7 +103,6 @@ export default function App() {
       </View>
     );
   }
-
   return <AppContent />;
 }
 
@@ -115,7 +119,6 @@ const webStyles = StyleSheet.create({
     maxWidth: 430,
     backgroundColor: '#F8F9FE',
     overflow: 'hidden',
-    // On actual phones this fills the screen; on desktop it's centered
     ...(Platform.OS === 'web' ? {
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 0 },
