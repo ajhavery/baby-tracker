@@ -103,6 +103,7 @@ export default function ChatScreen({ navigation }: any) {
       case 'feed_latched': return 'heart';
       case 'diaper': return 'layers';
       case 'growth': return 'trending-up';
+      case 'multi': return 'list';
       case 'task': return 'checkmark-circle';
       case 'vaccination': return 'medical';
       default: return 'chatbubble';
@@ -116,6 +117,7 @@ export default function ChatScreen({ navigation }: any) {
       case 'diaper': return COLORS.accent1;
       case 'growth': return COLORS.accent2;
       case 'task': return COLORS.accent1;
+      case 'multi': return COLORS.primary;
       case 'vaccination': return COLORS.secondary;
       default: return COLORS.textLight;
     }
@@ -212,7 +214,7 @@ export default function ChatScreen({ navigation }: any) {
           returnKeyType="send"
           onSubmitEditing={handleSend}
           editable={!processing}
-          multiline={false}
+          multiline
         />
         <TouchableOpacity
           style={[styles.sendBtn, (!input.trim() || processing) && styles.sendBtnDisabled]}
