@@ -5,9 +5,7 @@ import * as FileSystem from 'expo-file-system';
 
 WebBrowser.maybeCompleteAuthSession();
 
-const GOOGLE_CLIENT_ID_IOS = '__YOUR_IOS_CLIENT_ID__'; // Replace with your Google Cloud OAuth client ID
-const GOOGLE_CLIENT_ID_ANDROID = '__YOUR_ANDROID_CLIENT_ID__';
-const GOOGLE_CLIENT_ID_WEB = '__YOUR_WEB_CLIENT_ID__';
+const GOOGLE_CLIENT_ID_WEB = '567529670007-i1a3dmi57q12cc00fp5oebisiippr61v.apps.googleusercontent.com';
 
 const STORAGE_KEY = 'google_drive_token';
 const FOLDER_NAME = 'BabyTracker';
