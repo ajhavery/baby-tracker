@@ -17,6 +17,7 @@ import MediaScreen from './src/screens/MediaScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import ChatScreen from './src/screens/ChatScreen';
 import ExportScreen from './src/screens/ExportScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -92,6 +93,7 @@ function AppContent() {
         <Stack.Screen name="Profile" component={ProfileScreen} />
         <Stack.Screen name="Chat" component={ChatScreen} />
         <Stack.Screen name="Export" component={ExportScreen} />
+        <Stack.Screen name="Settings" component={SettingsScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

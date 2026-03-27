@@ -4,6 +4,25 @@ import {
   FeedEntry, DiaperEntry, GrowthEntry, BabyProfile,
   DailyTask, TaskCompletion, VaccinationRecord,
 } from '../types';
+import { formatDate } from '../utils/helpers';
+import { getDayStartHour } from '../utils/settings';
+
+function nextCalendarDay(date: string): string {
+  const parts = date.split('-').map(Number);
+  const d = new Date(parts[0], parts[1] - 1, parts[2]);
+  d.setDate(d.getDate() + 1);
+  return formatDate(d);
+}
+
+// Check if an entry belongs to a tracking date
+// e.g. if dayStartHour=6, tracking date "Mar 27" = Mar 27 06:00 to Mar 28 05:59
+function belongsToTrackingDate(entryDate: string, entryTime: string, trackingDate: string): boolean {
+  const startHour = getDayStartHour();
+  const [h] = entryTime.split(':').map(Number);
+  if (entryDate === trackingDate && h >= startHour) return true;
+  if (entryDate === nextCalendarDay(trackingDate) && h < startHour) return true;
+  return false;
+}
 
 const KEYS = {
   FEEDS: 'baby_tracker_feeds',
@@ -54,7 +73,16 @@ export async function getFeeds(): Promise<FeedEntry[]> {
 }
 export async function getFeedsByDate(date: string): Promise<FeedEntry[]> {
   const feeds = await getFeeds();
-  return feeds.filter((f) => f.date === date).sort((a, b) => a.time.localeCompare(b.time));
+  return feeds
+    .filter((f) => belongsToTrackingDate(f.date, f.time, date))
+    .sort((a, b) => {
+      // Sort: 6AM-23:59 first, then 00:00-05:59 (next calendar day)
+      const aH = parseInt(a.time.split(':')[0]);
+      const bH = parseInt(b.time.split(':')[0]);
+      const aOrder = aH < getDayStartHour() ? aH + 24 : aH;
+      const bOrder = bH < getDayStartHour() ? bH + 24 : bH;
+      return aOrder - bOrder || a.time.localeCompare(b.time);
+    });
 }
 export async function addFeed(entry: FeedEntry): Promise<void> {
   const feeds = await getFeeds();
@@ -78,7 +106,15 @@ export async function getDiapers(): Promise<DiaperEntry[]> {
 }
 export async function getDiapersByDate(date: string): Promise<DiaperEntry[]> {
   const diapers = await getDiapers();
-  return diapers.filter((d) => d.date === date).sort((a, b) => a.time.localeCompare(b.time));
+  return diapers
+    .filter((d) => belongsToTrackingDate(d.date, d.time, date))
+    .sort((a, b) => {
+      const aH = parseInt(a.time.split(':')[0]);
+      const bH = parseInt(b.time.split(':')[0]);
+      const aOrder = aH < getDayStartHour() ? aH + 24 : aH;
+      const bOrder = bH < getDayStartHour() ? bH + 24 : bH;
+      return aOrder - bOrder || a.time.localeCompare(b.time);
+    });
 }
 export async function addDiaper(entry: DiaperEntry): Promise<void> {
   const diapers = await getDiapers();

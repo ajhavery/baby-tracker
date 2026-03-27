@@ -15,9 +15,25 @@ export function formatDate(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
-// Today's date in IST (not UTC)
+import { getDayStartHour } from './settings';
+
+// Today's "tracking date" in IST — before day start hour counts as yesterday
 export function todayIST(): string {
-  return formatDate(nowIST());
+  const now = nowIST();
+  if (now.getHours() < getDayStartHour()) {
+    now.setDate(now.getDate() - 1);
+  }
+  return formatDate(now);
+}
+
+// Current tracking date for a given time
+export function trackingDateForTime(time: string): string {
+  const [h] = time.split(':').map(Number);
+  const now = nowIST();
+  if (h < getDayStartHour()) {
+    now.setDate(now.getDate() - 1);
+  }
+  return formatDate(now);
 }
 
 export function formatTime(date: Date): string {

@@ -38,6 +38,7 @@ const MENU_ITEMS: MenuItem[] = [
   { icon: 'camera', label: 'Photos & Videos', subtitle: 'Capture and upload to Google Drive', color: COLORS.accent3, screen: 'Media' },
   { icon: 'download-outline', label: 'Export Report', subtitle: 'Generate and share reports', color: COLORS.accent1, screen: 'Export' },
   { icon: 'person-circle', label: 'Baby Profile', subtitle: 'Name, DOB, blood group', color: COLORS.primary, screen: 'Profile' },
+  { icon: 'settings-outline', label: 'Settings', subtitle: 'Day start time, preferences', color: COLORS.textLight, screen: 'Settings' },
 ];
 
 export default function MoreScreen({ navigation }: any) {
