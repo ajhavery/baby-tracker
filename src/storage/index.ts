@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   FeedEntry, DiaperEntry, GrowthEntry, BabyProfile,
@@ -14,39 +15,27 @@ const KEYS = {
   VACCINATIONS: 'baby_tracker_vaccinations',
 };
 
-// In-memory fallback when AsyncStorage native module isn't available (Expo Go)
-const memoryStore: Record<string, string> = {};
-let useMemory = false;
-
+// On web/PWA, use localStorage directly (persistent and reliable).
+// On native, use AsyncStorage.
 async function storageGet(key: string): Promise<string | null> {
-  if (useMemory) return memoryStore[key] ?? null;
+  if (Platform.OS === 'web') {
+    try { return localStorage.getItem(key); } catch { return null; }
+  }
   try {
     return await AsyncStorage.getItem(key);
-  } catch (e: any) {
-    if (e?.message?.includes('Native module') || e?.message?.includes('null')) {
-      console.warn('AsyncStorage native module unavailable, using in-memory fallback');
-      useMemory = true;
-      return memoryStore[key] ?? null;
-    }
-    throw e;
+  } catch {
+    return null;
   }
 }
 
 async function storageSet(key: string, value: string): Promise<void> {
-  if (useMemory) {
-    memoryStore[key] = value;
+  if (Platform.OS === 'web') {
+    try { localStorage.setItem(key, value); } catch {}
     return;
   }
   try {
     await AsyncStorage.setItem(key, value);
-  } catch (e: any) {
-    if (e?.message?.includes('Native module') || e?.message?.includes('null')) {
-      useMemory = true;
-      memoryStore[key] = value;
-      return;
-    }
-    throw e;
-  }
+  } catch {}
 }
 
 // Generic helpers

@@ -1,7 +1,30 @@
+import { Platform } from 'react-native';
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system';
+
+// Platform-aware storage helpers
+async function kvGet(key: string): Promise<string | null> {
+  if (Platform.OS === 'web') {
+    try { return localStorage.getItem(key); } catch { return null; }
+  }
+  try { return await AsyncStorage.getItem(key); } catch { return null; }
+}
+async function kvSet(key: string, value: string): Promise<void> {
+  if (Platform.OS === 'web') {
+    try { localStorage.setItem(key, value); } catch {}
+    return;
+  }
+  try { await AsyncStorage.setItem(key, value); } catch {}
+}
+async function kvRemove(key: string): Promise<void> {
+  if (Platform.OS === 'web') {
+    try { localStorage.removeItem(key); } catch {}
+    return;
+  }
+  try { await AsyncStorage.removeItem(key); } catch {}
+}
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -49,16 +72,14 @@ function getRedirectUri() {
 // Get stored token
 export async function getStoredToken(): Promise<string | null> {
   try {
-    const data = await AsyncStorage.getItem(STORAGE_KEY);
+    const data = await kvGet(STORAGE_KEY);
     if (!data) return null;
     const parsed = JSON.parse(data);
-    // Check if token is expired
     if (parsed.expiresAt && Date.now() > parsed.expiresAt) {
-      // Try refresh
       if (parsed.refreshToken) {
         return await refreshAccessToken(parsed.refreshToken);
       }
-      await AsyncStorage.removeItem(STORAGE_KEY);
+      await kvRemove(STORAGE_KEY);
       return null;
     }
     return parsed.accessToken;
@@ -74,7 +95,7 @@ async function storeToken(accessToken: string, refreshToken?: string, expiresIn?
     refreshToken,
     expiresAt: expiresIn ? Date.now() + expiresIn * 1000 : undefined,
   };
-  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  await kvSet(STORAGE_KEY, JSON.stringify(data));
 }
 
 // Refresh access token
@@ -136,7 +157,7 @@ export async function signOut() {
       await fetch(`${discovery.revocationEndpoint}?token=${token}`, { method: 'POST' });
     } catch {}
   }
-  await AsyncStorage.removeItem(STORAGE_KEY);
+  await kvRemove(STORAGE_KEY);
 }
 
 // Get user info
@@ -408,17 +429,11 @@ async function findDataBackupFile(
 
 // Get last sync info
 async function storeSyncTimestamp(): Promise<void> {
-  try {
-    await AsyncStorage.setItem(SYNC_TIMESTAMP_KEY, new Date().toISOString());
-  } catch {}
+  await kvSet(SYNC_TIMESTAMP_KEY, new Date().toISOString());
 }
 
 export async function getLastSyncTime(): Promise<string | null> {
-  try {
-    return await AsyncStorage.getItem(SYNC_TIMESTAMP_KEY);
-  } catch {
-    return null;
-  }
+  return await kvGet(SYNC_TIMESTAMP_KEY);
 }
 
 // Delete file from Drive
