@@ -27,7 +27,7 @@ const COLORS = {
   accent2: '#FDCB6E',
 };
 
-export default function GrowthScreen() {
+export default function GrowthScreen({ navigation }: any) {
   const [records, setRecords] = useState<GrowthEntry[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [weight, setWeight] = useState('');
@@ -94,7 +94,10 @@ export default function GrowthScreen() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { flexDirection: 'row', alignItems: 'center', gap: 12 }]}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={{ padding: 4 }}>
+          <Ionicons name="arrow-back" size={24} color={COLORS.text} />
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>Growth Tracker</Text>
       </View>
 

@@ -46,7 +46,7 @@ const COLORS = {
 const { width } = Dimensions.get('window');
 const THUMB_SIZE = (width - 48 - 16) / 3;
 
-export default function MediaScreen() {
+export default function MediaScreen({ navigation }: any) {
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [user, setUser] = useState<GoogleUser | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
@@ -311,7 +311,11 @@ export default function MediaScreen() {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={{ padding: 4 }}>
+            <Ionicons name="arrow-back" size={24} color={COLORS.text} />
+          </TouchableOpacity>
           <Text style={styles.headerTitle}>Photos & Videos</Text>
+          <View style={{ width: 32 }} />
         </View>
         <View style={styles.connectSection}>
           <View style={styles.driveIconCircle}>
@@ -364,7 +368,10 @@ export default function MediaScreen() {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Photos & Videos</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={{ padding: 4 }}>
+          <Ionicons name="arrow-back" size={24} color={COLORS.text} />
+        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { flex: 1, marginLeft: 12 }]}>Photos & Videos</Text>
         <TouchableOpacity onPress={handleSignOut}>
           <View style={styles.userChip}>
             {user?.picture ? (

@@ -71,7 +71,7 @@ const VACCINE_SCHEDULE: Vaccine[] = [
   { id: 'var2', name: 'Varicella-2', category: '4-6 Years', scheduledWeek: 260 },
 ];
 
-export default function VaccinationScreen() {
+export default function VaccinationScreen({ navigation }: any) {
   const [records, setRecords] = useState<VaccinationRecord[]>([]);
   const [babyDob, setBabyDob] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -177,7 +177,10 @@ export default function VaccinationScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Vaccinations</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={{ padding: 4 }}>
+          <Ionicons name="arrow-back" size={24} color={COLORS.text} />
+        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { flex: 1 }]}>Vaccinations</Text>
         <View style={styles.counterChip}>
           <Text style={styles.counterText}>{givenCount}/{VACCINE_SCHEDULE.length}</Text>
         </View>
