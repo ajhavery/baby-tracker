@@ -3,7 +3,7 @@ import { generateId, formatDate } from '../utils/helpers';
 import {
   addFeed, addDiaper, addGrowthRecord,
   getTasks, addTaskCompletion, getTaskCompletionsByDate,
-  addVaccination,
+  addVaccination, getFeedsByDate, getDiapersByDate,
 } from '../storage';
 
 export interface ParseResult {
@@ -135,6 +135,18 @@ function extractHeadCirc(text: string): number | null {
   return match ? parseFloat(match[1]) : null;
 }
 
+// ─── Duplicate detection ───
+
+async function isDuplicateFeed(date: string, time: string, type: 'expressed' | 'latched', amountMl?: number): Promise<boolean> {
+  const feeds = await getFeedsByDate(date);
+  return feeds.some((f) => f.time === time && f.type === type && (type === 'latched' || f.amountMl === amountMl));
+}
+
+async function isDuplicateDiaper(date: string, time: string, type: string): Promise<boolean> {
+  const diapers = await getDiapersByDate(date);
+  return diapers.some((d) => d.time === time && d.type === type);
+}
+
 // ─── Parse a single line/entry ───
 
 async function parseSingleEntry(text: string, date: string): Promise<ParseResult> {
@@ -166,6 +178,10 @@ async function parseSingleEntry(text: string, date: string): Promise<ParseResult
       endTime = `${Math.floor(totalMins / 60).toString().padStart(2, '0')}:${(totalMins % 60).toString().padStart(2, '0')}`;
     }
 
+    if (await isDuplicateFeed(date, startTime, 'latched')) {
+      const timeText = endTime ? `${startTime} - ${endTime}` : `at ${startTime}`;
+      return { success: true, type: 'feed_latched', message: `Latched ${timeText} (already exists, skipped)` };
+    }
     await addFeed({ id: generateId(), date, time: startTime, type: 'latched', startTime, endTime, durationMinutes: mins });
     const durationText = mins ? `${mins} mins` : '';
     const timeText = endTime ? `${startTime} - ${endTime}` : `at ${startTime}`;
@@ -177,6 +193,9 @@ async function parseSingleEntry(text: string, date: string): Promise<ParseResult
   if (amount || /\b(expressed|bottle|pumped|formula)\b/i.test(lower)) {
     if (amount) {
       const time = extractSingleTime(text) || currentTime;
+      if (await isDuplicateFeed(date, time, 'expressed', amount)) {
+        return { success: true, type: 'feed_expressed', message: `${amount} mL at ${time} (already exists, skipped)` };
+      }
       await addFeed({ id: generateId(), date, time, type: 'expressed', amountMl: amount });
       return { success: true, type: 'feed_expressed', message: `${amount} mL expressed at ${time}` };
     }
@@ -191,6 +210,10 @@ async function parseSingleEntry(text: string, date: string): Promise<ParseResult
       diaperType = 'potty';
     }
     const time = extractSingleTime(text) || currentTime;
+    if (await isDuplicateDiaper(date, time, diaperType)) {
+      const label = diaperType === 'urine' ? 'Urine' : diaperType === 'potty' ? 'Potty' : 'Both';
+      return { success: true, type: 'diaper', message: `${label} at ${time} (already exists, skipped)` };
+    }
     await addDiaper({ id: generateId(), date, time, type: diaperType });
     const label = diaperType === 'urine' ? 'Urine' : diaperType === 'potty' ? 'Potty' : 'Both';
     return { success: true, type: 'diaper', message: `${label} at ${time}` };
@@ -249,9 +272,17 @@ async function parseSingleEntry(text: string, date: string): Promise<ParseResult
 
 // ─── Split multi-entry message into individual lines ───
 
+function cleanLine(line: string): string {
+  return line
+    .replace(/^[\s•\-\*\u2022\u2027\u2043\u25E6\u00B7\u2981\uFE61]+/, '') // strip bullets
+    .replace(/\bom\b/gi, 'pm') // fix "om" typo for "pm"
+    .replace(/\u2060/g, '') // remove word joiners
+    .trim();
+}
+
 function splitEntries(text: string): string[] {
   // Split on newlines, bullet points, dashes at start of line, or numbered items
-  let lines = text.split(/[\n\r]+/).map((l) => l.trim()).filter(Boolean);
+  let lines = text.split(/[\n\r]+/).map((l) => cleanLine(l)).filter(Boolean);
 
   // If only 1 line, try splitting by " - " pattern (common in schedules)
   if (lines.length === 1) {
@@ -299,6 +330,7 @@ export async function parseAndSave(input: string): Promise<ParseResult> {
   // Multi-entry: parse each line
   const results: string[] = [];
   let successCount = 0;
+  let skippedCount = 0;
   let failCount = 0;
 
   for (const line of lines) {
@@ -308,23 +340,38 @@ export async function parseAndSave(input: string): Promise<ParseResult> {
 
     const result = await parseSingleEntry(line, date);
     if (result.success) {
-      results.push(`+ ${result.message}`);
-      successCount++;
+      if (result.message.includes('skipped')) {
+        results.push(`~ ${result.message}`);
+        skippedCount++;
+      } else {
+        results.push(`+ ${result.message}`);
+        successCount++;
+      }
     } else {
       // Try harder: if line has a time and amount, treat as expressed
       const amt = extractAmount(line);
       const time = extractSingleTime(line);
       if (amt && time) {
-        await addFeed({ id: generateId(), date, time, type: 'expressed', amountMl: amt });
-        results.push(`+ ${amt} mL expressed at ${time}`);
-        successCount++;
+        if (await isDuplicateFeed(date, time, 'expressed', amt)) {
+          results.push(`~ ${amt} mL at ${time} (skipped, duplicate)`);
+          skippedCount++;
+        } else {
+          await addFeed({ id: generateId(), date, time, type: 'expressed', amountMl: amt });
+          results.push(`+ ${amt} mL expressed at ${time}`);
+          successCount++;
+        }
       } else if (time && /latch/i.test(text)) {
-        // Context from overall message
-        await addFeed({ id: generateId(), date, time, type: 'latched', startTime: time });
-        results.push(`+ Latched at ${time}`);
-        successCount++;
+        if (await isDuplicateFeed(date, time, 'latched')) {
+          results.push(`~ Latched at ${time} (skipped, duplicate)`);
+          skippedCount++;
+        } else {
+          await addFeed({ id: generateId(), date, time, type: 'latched', startTime: time });
+          results.push(`+ Latched at ${time}`);
+          successCount++;
+        }
       } else if (amt) {
-        await addFeed({ id: generateId(), date, time: `${new Date().getHours().toString().padStart(2, '0')}:${new Date().getMinutes().toString().padStart(2, '0')}`, type: 'expressed', amountMl: amt });
+        const nowTime = `${new Date().getHours().toString().padStart(2, '0')}:${new Date().getMinutes().toString().padStart(2, '0')}`;
+        await addFeed({ id: generateId(), date, time: nowTime, type: 'expressed', amountMl: amt });
         results.push(`+ ${amt} mL expressed`);
         successCount++;
       } else {
@@ -333,7 +380,7 @@ export async function parseAndSave(input: string): Promise<ParseResult> {
     }
   }
 
-  if (successCount === 0) {
+  if (successCount === 0 && skippedCount === 0) {
     return {
       success: false,
       type: 'unknown',
@@ -342,9 +389,13 @@ export async function parseAndSave(input: string): Promise<ParseResult> {
   }
 
   const dateLabel = date === formatDate(new Date()) ? 'today' : date;
+  const parts: string[] = [];
+  if (successCount > 0) parts.push(`${successCount} added`);
+  if (skippedCount > 0) parts.push(`${skippedCount} duplicates skipped`);
+  if (failCount > 0) parts.push(`${failCount} not parsed`);
   return {
     success: true,
     type: 'multi',
-    message: `Added ${successCount} entries for ${dateLabel}:\n${results.join('\n')}${failCount > 0 ? `\n(${failCount} lines skipped)` : ''}`,
+    message: `${parts.join(', ')} for ${dateLabel}:\n${results.join('\n')}`,
   };
 }
