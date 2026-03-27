@@ -1,5 +1,6 @@
 import { FeedEntry, DiaperEntry, GrowthEntry, TaskCompletion } from '../types';
 import { generateId, formatDate, nowIST, todayIST, currentTimeIST } from '../utils/helpers';
+import { getDayStartHour } from '../utils/settings';
 import {
   addFeed, addDiaper, addGrowthRecord,
   getTasks, addTaskCompletion, getTaskCompletionsByDate,
@@ -147,6 +148,21 @@ async function isDuplicateDiaper(date: string, time: string, type: string): Prom
   return diapers.some((d) => d.time === time && d.type === type);
 }
 
+// ─── Calendar date for storage ───
+// When user says "27 March schedule" and an entry is at 1 AM,
+// the calendar date is actually March 28 (but it belongs to the March 27 tracking day).
+function calendarDateForEntry(trackingDate: string, time: string): string {
+  const [h] = time.split(':').map(Number);
+  if (h < getDayStartHour()) {
+    // This entry is after midnight but before day start — it's the next calendar day
+    const parts = trackingDate.split('-').map(Number);
+    const d = new Date(parts[0], parts[1] - 1, parts[2]);
+    d.setDate(d.getDate() + 1);
+    return formatDate(d);
+  }
+  return trackingDate;
+}
+
 // ─── Parse a single line/entry ───
 
 async function parseSingleEntry(text: string, date: string): Promise<ParseResult> {
@@ -181,7 +197,8 @@ async function parseSingleEntry(text: string, date: string): Promise<ParseResult
       const timeText = endTime ? `${startTime} - ${endTime}` : `at ${startTime}`;
       return { success: true, type: 'feed_latched', message: `Latched ${timeText} (already exists, skipped)` };
     }
-    await addFeed({ id: generateId(), date, time: startTime, type: 'latched', startTime, endTime, durationMinutes: mins });
+    const storeDate = calendarDateForEntry(date, startTime);
+    await addFeed({ id: generateId(), date: storeDate, time: startTime, type: 'latched', startTime, endTime, durationMinutes: mins });
     const durationText = mins ? `${mins} mins` : '';
     const timeText = endTime ? `${startTime} - ${endTime}` : `at ${startTime}`;
     return { success: true, type: 'feed_latched', message: `Latched ${timeText}${durationText ? ` (${durationText})` : ''}` };
@@ -197,7 +214,8 @@ async function parseSingleEntry(text: string, date: string): Promise<ParseResult
       if (await isDuplicateFeed(date, time, feedType, amount)) {
         return { success: true, type: 'feed_expressed', message: `${amount} mL at ${time} (already exists, skipped)` };
       }
-      await addFeed({ id: generateId(), date, time, type: feedType, amountMl: amount });
+      const storeDate = calendarDateForEntry(date, time);
+      await addFeed({ id: generateId(), date: storeDate, time, type: feedType, amountMl: amount });
       const label = isFormula ? 'formula' : 'expressed';
       return { success: true, type: 'feed_expressed', message: `${amount} mL ${label} at ${time}` };
     }
@@ -216,7 +234,8 @@ async function parseSingleEntry(text: string, date: string): Promise<ParseResult
       const label = diaperType === 'urine' ? 'Urine' : diaperType === 'potty' ? 'Potty' : 'Both';
       return { success: true, type: 'diaper', message: `${label} at ${time} (already exists, skipped)` };
     }
-    await addDiaper({ id: generateId(), date, time, type: diaperType });
+    const storeDate = calendarDateForEntry(date, time);
+    await addDiaper({ id: generateId(), date: storeDate, time, type: diaperType });
     const label = diaperType === 'urine' ? 'Urine' : diaperType === 'potty' ? 'Potty' : 'Both';
     return { success: true, type: 'diaper', message: `${label} at ${time}` };
   }
@@ -358,7 +377,8 @@ export async function parseAndSave(input: string): Promise<ParseResult> {
           results.push(`~ ${amt} mL at ${time} (skipped, duplicate)`);
           skippedCount++;
         } else {
-          await addFeed({ id: generateId(), date, time, type: 'expressed', amountMl: amt });
+          const sd = calendarDateForEntry(date, time);
+          await addFeed({ id: generateId(), date: sd, time, type: 'expressed', amountMl: amt });
           results.push(`+ ${amt} mL expressed at ${time}`);
           successCount++;
         }
@@ -367,13 +387,15 @@ export async function parseAndSave(input: string): Promise<ParseResult> {
           results.push(`~ Latched at ${time} (skipped, duplicate)`);
           skippedCount++;
         } else {
-          await addFeed({ id: generateId(), date, time, type: 'latched', startTime: time });
+          const sd = calendarDateForEntry(date, time);
+          await addFeed({ id: generateId(), date: sd, time, type: 'latched', startTime: time });
           results.push(`+ Latched at ${time}`);
           successCount++;
         }
       } else if (amt) {
         const nowTime = currentTimeIST();
-        await addFeed({ id: generateId(), date, time: nowTime, type: 'expressed', amountMl: amt });
+        const sd = calendarDateForEntry(date, nowTime);
+        await addFeed({ id: generateId(), date: sd, time: nowTime, type: 'expressed', amountMl: amt });
         results.push(`+ ${amt} mL expressed`);
         successCount++;
       } else {
