@@ -1,12 +1,6 @@
-import React, { useRef } from 'react';
-import {
-  View, Text, StyleSheet, Animated, PanResponder, TouchableOpacity,
-  Dimensions,
-} from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-
-const SWIPE_THRESHOLD = 60;
-const ACTION_WIDTH = 80;
 
 interface Props {
   children: React.ReactNode;
@@ -15,120 +9,109 @@ interface Props {
 }
 
 export default function SwipeableRow({ children, onEdit, onDelete }: Props) {
-  const translateX = useRef(new Animated.Value(0)).current;
-  const isOpen = useRef(false);
-
-  const panResponder = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gesture) => {
-        return Math.abs(gesture.dx) > 10 && Math.abs(gesture.dx) > Math.abs(gesture.dy);
-      },
-      onPanResponderMove: (_, gesture) => {
-        if (gesture.dx < 0) {
-          // Swiping left - show actions
-          const clamped = Math.max(gesture.dx, -(ACTION_WIDTH * 2));
-          translateX.setValue(isOpen.current ? clamped - ACTION_WIDTH * 2 : clamped);
-        } else if (isOpen.current) {
-          // Swiping right to close
-          const clamped = Math.min(gesture.dx, ACTION_WIDTH * 2);
-          translateX.setValue(clamped - ACTION_WIDTH * 2);
-        }
-      },
-      onPanResponderRelease: (_, gesture) => {
-        if (gesture.dx < -SWIPE_THRESHOLD && !isOpen.current) {
-          // Open
-          isOpen.current = true;
-          Animated.spring(translateX, {
-            toValue: -(ACTION_WIDTH * 2),
-            useNativeDriver: true,
-            tension: 100,
-            friction: 10,
-          }).start();
-        } else {
-          // Close
-          isOpen.current = false;
-          Animated.spring(translateX, {
-            toValue: 0,
-            useNativeDriver: true,
-            tension: 100,
-            friction: 10,
-          }).start();
-        }
-      },
-    })
-  ).current;
-
-  const close = () => {
-    isOpen.current = false;
-    Animated.spring(translateX, {
-      toValue: 0,
-      useNativeDriver: true,
-      tension: 100,
-      friction: 10,
-    }).start();
-  };
+  const [showActions, setShowActions] = useState(false);
 
   return (
-    <View style={styles.container}>
-      {/* Background actions */}
-      <View style={styles.actionsContainer}>
-        <TouchableOpacity
-          style={[styles.actionBtn, styles.editBtn]}
-          onPress={() => { close(); onEdit?.(); }}
-        >
-          <Ionicons name="create-outline" size={20} color="#fff" />
-          <Text style={styles.actionText}>Edit</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.actionBtn, styles.deleteBtn]}
-          onPress={() => { close(); onDelete?.(); }}
-        >
-          <Ionicons name="trash-outline" size={20} color="#fff" />
-          <Text style={styles.actionText}>Delete</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Foreground content */}
-      <Animated.View
-        style={{ transform: [{ translateX }] }}
-        {...panResponder.panHandlers}
+    <>
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={() => setShowActions(true)}
+        style={styles.wrapper}
       >
         {children}
-      </Animated.View>
-    </View>
+      </TouchableOpacity>
+
+      <Modal visible={showActions} transparent animationType="fade">
+        <TouchableOpacity
+          style={styles.overlay}
+          activeOpacity={1}
+          onPress={() => setShowActions(false)}
+        >
+          <View style={styles.actionSheet}>
+            <TouchableOpacity
+              style={styles.actionItem}
+              onPress={() => { setShowActions(false); onEdit?.(); }}
+            >
+              <View style={[styles.actionIcon, { backgroundColor: '#6C63FF18' }]}>
+                <Ionicons name="create-outline" size={22} color="#6C63FF" />
+              </View>
+              <Text style={styles.actionText}>Edit</Text>
+            </TouchableOpacity>
+
+            <View style={styles.divider} />
+
+            <TouchableOpacity
+              style={styles.actionItem}
+              onPress={() => { setShowActions(false); onDelete?.(); }}
+            >
+              <View style={[styles.actionIcon, { backgroundColor: '#FF658418' }]}>
+                <Ionicons name="trash-outline" size={22} color="#FF6584" />
+              </View>
+              <Text style={[styles.actionText, { color: '#FF6584' }]}>Delete</Text>
+            </TouchableOpacity>
+
+            <View style={styles.divider} />
+
+            <TouchableOpacity
+              style={styles.cancelItem}
+              onPress={() => setShowActions(false)}
+            >
+              <Text style={styles.cancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    position: 'relative',
+  wrapper: {
     marginBottom: 8,
-    overflow: 'hidden',
-    borderRadius: 12,
   },
-  actionsContainer: {
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    bottom: 0,
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end',
+  },
+  actionSheet: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingTop: 12,
+    paddingBottom: 34,
+  },
+  actionItem: {
     flexDirection: 'row',
-    alignItems: 'stretch',
-  },
-  actionBtn: {
-    width: ACTION_WIDTH,
-    justifyContent: 'center',
     alignItems: 'center',
-    gap: 4,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    gap: 14,
   },
-  editBtn: {
-    backgroundColor: '#6C63FF',
-  },
-  deleteBtn: {
-    backgroundColor: '#FF6584',
+  actionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   actionText: {
-    color: '#fff',
-    fontSize: 12,
+    fontSize: 17,
     fontWeight: '600',
+    color: '#2D3436',
+  },
+  divider: {
+    height: 0.5,
+    backgroundColor: '#E8E8E8',
+    marginHorizontal: 24,
+  },
+  cancelItem: {
+    alignItems: 'center',
+    paddingVertical: 16,
+  },
+  cancelText: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#636E72',
   },
 });
