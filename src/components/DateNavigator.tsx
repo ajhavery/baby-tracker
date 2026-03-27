@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Platform, Alert,
+  View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { formatDate } from '../utils/helpers';
@@ -96,35 +96,16 @@ export default function DateNavigator({ selectedDate, onDateChange, style }: Pro
           <View style={styles.pickerSheet}>
             <Text style={styles.pickerTitle}>Select Date</Text>
 
-            {Platform.OS === 'web' ? (
-              <input
-                type="date"
-                value={pickerValue}
-                max={today}
-                onChange={(e: any) => {
-                  const val = e.target.value;
-                  if (val <= today) setPickerValue(val);
-                }}
-                style={{
-                  fontSize: 18,
-                  padding: 14,
-                  borderRadius: 12,
-                  border: '1px solid #E0E0E0',
-                  backgroundColor: '#F8F9FE',
-                  width: '100%',
-                  boxSizing: 'border-box' as any,
-                  marginBottom: 16,
-                }}
-              />
-            ) : (
-              <TextInput
-                style={styles.dateInput}
-                value={pickerValue}
-                onChangeText={setPickerValue}
-                placeholder="YYYY-MM-DD"
-                keyboardType="default"
-              />
-            )}
+            <TextInput
+              style={styles.dateInput}
+              value={pickerValue}
+              onChangeText={(val) => {
+                setPickerValue(val);
+              }}
+              placeholder="YYYY-MM-DD"
+              keyboardType="default"
+              maxLength={10}
+            />
 
             {/* Quick date buttons */}
             <View style={styles.quickDates}>
