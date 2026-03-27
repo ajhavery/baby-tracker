@@ -31,17 +31,18 @@ export default function DateNavigator({ selectedDate, onDateChange, style }: Pro
   const [showPicker, setShowPicker] = useState(false);
   const [pickerValue, setPickerValue] = useState(selectedDate);
 
-  const today = todayIST();
-  const isToday = selectedDate === today;
-
   const changeDate = (offset: number) => {
-    const d = new Date(selectedDate + 'T00:00:00');
+    const today = todayIST(); // Always fresh
+    const parts = selectedDate.split('-').map(Number);
+    const d = new Date(parts[0], parts[1] - 1, parts[2]);
     d.setDate(d.getDate() + offset);
     const newDate = formatDate(d);
-    if (newDate <= today) {
-      onDateChange(newDate);
-    }
+    if (offset > 0 && newDate > today) return; // Don't go past today
+    onDateChange(newDate);
   };
+
+  const today = todayIST();
+  const isToday = selectedDate === today;
 
   const openPicker = () => {
     setPickerValue(selectedDate);
