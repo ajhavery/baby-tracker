@@ -279,13 +279,16 @@ export async function parseAndSave(input: string): Promise<ParseResult> {
   // Extract date from the message header (e.g. "26 Mar Milk schedule:")
   const date = parseDateFromText(text);
 
+  // Always try parsing the full text as a single entry first
+  // This handles cases like "Latched: 2:52 pm - 3:05 pm" which should NOT be split
+  const singleResult = await parseSingleEntry(text, date);
+  if (singleResult.success) return singleResult;
+
   // Split into individual entries
   const lines = splitEntries(text);
 
-  // If single line, parse directly
-  if (lines.length === 1) {
-    const result = await parseSingleEntry(lines[0], date);
-    if (result.success) return result;
+  // If splitting didn't produce multiple lines, return the failure
+  if (lines.length <= 1) {
     return {
       success: false,
       type: 'unknown',
