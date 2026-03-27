@@ -16,7 +16,7 @@ import { GrowthEntry } from '../types';
 import { getGrowthRecords, addGrowthRecord, deleteGrowthRecord } from '../storage';
 import { HEADER_TOP_PADDING } from '../utils/platform';
 import { triggerAutoSync } from '../services/autoSync';
-import { formatDate, formatDisplayDate, generateId } from '../utils/helpers';
+import { formatDisplayDate, generateId, todayIST } from '../utils/helpers';
 
 const COLORS = {
   primary: '#6C63FF',
@@ -65,7 +65,7 @@ export default function GrowthScreen({ navigation }: any) {
 
     await addGrowthRecord({
       id: generateId(),
-      date: formatDate(new Date()),
+      date: todayIST(),
       weightKg: weight ? Number(weight) : undefined,
       heightCm: height ? Number(height) : undefined,
       headCircumferenceCm: headCirc ? Number(headCirc) : undefined,

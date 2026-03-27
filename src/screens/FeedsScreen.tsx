@@ -13,11 +13,11 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { FeedEntry, FeedType } from '../types';
-import SwipeableRow from '../components/SwipeableRow';
+import SelectableList from '../components/SelectableList';
 import { getFeedsByDate, addFeed, updateFeed, deleteFeed } from '../storage';
 import { HEADER_TOP_PADDING } from '../utils/platform';
 import { triggerAutoSync } from '../services/autoSync';
-import { formatDate, formatDisplayTime, generateId } from '../utils/helpers';
+import { formatDisplayTime, generateId, todayIST, nowIST } from '../utils/helpers';
 import DateNavigator from '../components/DateNavigator';
 
 const COLORS = {
@@ -32,7 +32,7 @@ const COLORS = {
 };
 
 export default function FeedsScreen() {
-  const [selectedDate, setSelectedDate] = useState(formatDate(new Date()));
+  const [selectedDate, setSelectedDate] = useState(todayIST());
   const [feeds, setFeeds] = useState<FeedEntry[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -56,7 +56,7 @@ export default function FeedsScreen() {
   );
 
   const openAddModal = () => {
-    const now = new Date();
+    const now = nowIST();
     setEditingId(null);
     setTimeHour(now.getHours().toString().padStart(2, '0'));
     setTimeMinute(now.getMinutes().toString().padStart(2, '0'));
@@ -128,6 +128,12 @@ export default function FeedsScreen() {
     triggerAutoSync();
   };
 
+  const handleDeleteMultiple = async (ids: string[]) => {
+    for (const id of ids) await deleteFeed(id);
+    loadFeeds();
+    triggerAutoSync();
+  };
+
   const onRefresh = async () => {
     setRefreshing(true);
     await loadFeeds();
@@ -175,12 +181,12 @@ export default function FeedsScreen() {
             <Text style={styles.emptyText}>No feeds recorded</Text>
           </View>
         ) : (
-          feeds.map((feed) => (
-            <SwipeableRow
-              key={feed.id}
-              onEdit={() => openEditModal(feed)}
-              onDelete={() => handleDelete(feed.id)}
-            >
+          <SelectableList
+            items={feeds}
+            onEdit={(feed) => openEditModal(feed)}
+            onDelete={(id) => handleDelete(id)}
+            onDeleteMultiple={handleDeleteMultiple}
+            renderItem={(feed: FeedEntry) => (
               <View style={styles.feedCard}>
                 <View
                   style={[
@@ -214,8 +220,8 @@ export default function FeedsScreen() {
                   </Text>
                 </View>
               </View>
-            </SwipeableRow>
-          ))
+            )}
+          />
         )}
         <View style={{ height: 80 }} />
       </ScrollView>

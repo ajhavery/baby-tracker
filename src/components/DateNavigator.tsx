@@ -3,7 +3,7 @@ import {
   View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { formatDate } from '../utils/helpers';
+import { formatDate, todayIST } from '../utils/helpers';
 
 const COLORS = {
   primary: '#6C63FF',
@@ -31,7 +31,7 @@ export default function DateNavigator({ selectedDate, onDateChange, style }: Pro
   const [showPicker, setShowPicker] = useState(false);
   const [pickerValue, setPickerValue] = useState(selectedDate);
 
-  const today = formatDate(new Date());
+  const today = todayIST();
   const isToday = selectedDate === today;
 
   const changeDate = (offset: number) => {

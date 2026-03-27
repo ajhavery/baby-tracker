@@ -12,7 +12,7 @@ import {
 } from '../storage';
 import { HEADER_TOP_PADDING } from '../utils/platform';
 import { triggerAutoSync } from '../services/autoSync';
-import { formatDate, formatDisplayTime, generateId } from '../utils/helpers';
+import { formatDisplayTime, generateId, todayIST, currentTimeIST } from '../utils/helpers';
 import DateNavigator from '../components/DateNavigator';
 
 const COLORS = {
@@ -27,7 +27,7 @@ const COLORS = {
 };
 
 export default function TasksScreen() {
-  const [selectedDate, setSelectedDate] = useState(formatDate(new Date()));
+  const [selectedDate, setSelectedDate] = useState(todayIST());
   const [tasks, setTasks] = useState<DailyTask[]>([]);
   const [completions, setCompletions] = useState<TaskCompletion[]>([]);
   const [showModal, setShowModal] = useState(false);
@@ -53,7 +53,7 @@ export default function TasksScreen() {
     setRefreshing(false);
   };
 
-  const isToday = selectedDate === formatDate(new Date());
+  const isToday = selectedDate === todayIST();
 
   const isCompleted = (taskId: string) =>
     completions.some((c) => c.taskId === taskId);
@@ -67,7 +67,7 @@ export default function TasksScreen() {
         taskId,
         date: selectedDate,
         time: formatDisplayTime(
-          `${new Date().getHours().toString().padStart(2, '0')}:${new Date().getMinutes().toString().padStart(2, '0')}`
+          currentTimeIST()
         ),
       });
     }
@@ -86,7 +86,7 @@ export default function TasksScreen() {
       description: taskDesc.trim() || undefined,
       time: taskTime.trim() || undefined,
       active: true,
-      createdDate: formatDate(new Date()),
+      createdDate: todayIST(),
     });
     setShowModal(false);
     setTaskName('');

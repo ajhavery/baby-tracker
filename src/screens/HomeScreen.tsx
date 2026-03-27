@@ -15,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { FeedEntry, DiaperEntry } from '../types';
 import { getFeedsByDate, getDiapersByDate, getProfile, seedSampleData } from '../storage';
 import { HEADER_TOP_PADDING } from '../utils/platform';
-import { formatDate, formatDisplayTime, getAgeString } from '../utils/helpers';
+import { formatDisplayTime, getAgeString, todayIST } from '../utils/helpers';
 import DateNavigator from '../components/DateNavigator';
 import { getStoredToken } from '../services/googleDrive';
 import { fullSync, getLastSyncTime } from '../services/syncService';
@@ -38,7 +38,7 @@ export default function HomeScreen({ navigation }: any) {
   const [babyName, setBabyName] = useState('Baby');
   const [babyDob, setBabyDob] = useState('');
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(formatDate(new Date()));
+  const [selectedDate, setSelectedDate] = useState(todayIST());
   const [syncing, setSyncing] = useState(false);
   const [lastSync, setLastSync] = useState<string | null>(null);
   const [isDriveConnected, setIsDriveConnected] = useState(false);
@@ -110,7 +110,7 @@ export default function HomeScreen({ navigation }: any) {
   const urineCount = diapers.filter((d) => d.type === 'urine' || d.type === 'both').length;
   const pottyCount = diapers.filter((d) => d.type === 'potty' || d.type === 'both').length;
 
-  const isToday = selectedDate === formatDate(new Date());
+  const isToday = selectedDate === todayIST();
 
   return (
     <View style={styles.container}>

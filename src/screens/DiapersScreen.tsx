@@ -17,7 +17,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { DiaperEntry, DiaperType } from '../types';
-import SwipeableRow from '../components/SwipeableRow';
+import SelectableList from '../components/SelectableList';
 import { getDiapersByDate, addDiaper, updateDiaper, deleteDiaper } from '../storage';
 import { HEADER_TOP_PADDING } from '../utils/platform';
 import { triggerAutoSync } from '../services/autoSync';
@@ -26,7 +26,7 @@ import {
   uploadToDrive,
   uploadToDriveWeb,
 } from '../services/googleDrive';
-import { formatDate, formatDisplayTime, generateId } from '../utils/helpers';
+import { formatDisplayTime, generateId, todayIST, nowIST } from '../utils/helpers';
 import DateNavigator from '../components/DateNavigator';
 
 const COLORS = {
@@ -41,7 +41,7 @@ const COLORS = {
 };
 
 export default function DiapersScreen() {
-  const [selectedDate, setSelectedDate] = useState(formatDate(new Date()));
+  const [selectedDate, setSelectedDate] = useState(todayIST());
   const [diapers, setDiapers] = useState<DiaperEntry[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [diaperType, setDiaperType] = useState<DiaperType>('urine');
@@ -66,7 +66,7 @@ export default function DiapersScreen() {
   );
 
   const openAddModal = () => {
-    const now = new Date();
+    const now = nowIST();
     setEditingId(null);
     setTimeHour(now.getHours().toString().padStart(2, '0'));
     setTimeMinute(now.getMinutes().toString().padStart(2, '0'));
@@ -205,6 +205,12 @@ export default function DiapersScreen() {
     triggerAutoSync();
   };
 
+  const handleDeleteMultiple = async (ids: string[]) => {
+    for (const id of ids) await deleteDiaper(id);
+    loadDiapers();
+    triggerAutoSync();
+  };
+
   const onRefresh = async () => {
     setRefreshing(true);
     await loadDiapers();
@@ -261,12 +267,12 @@ export default function DiapersScreen() {
             <Text style={styles.emptyText}>No diaper changes recorded</Text>
           </View>
         ) : (
-          diapers.map((diaper) => (
-            <SwipeableRow
-              key={diaper.id}
-              onEdit={() => openEditModal(diaper)}
-              onDelete={() => handleDelete(diaper.id)}
-            >
+          <SelectableList
+            items={diapers}
+            onEdit={(diaper) => openEditModal(diaper)}
+            onDelete={(id) => handleDelete(id)}
+            onDeleteMultiple={handleDeleteMultiple}
+            renderItem={(diaper: DiaperEntry) => (
               <View style={styles.card}>
                 <View style={[styles.iconCircle, { backgroundColor: getDiaperColor(diaper.type) + '20' }]}>
                   <Ionicons name={getDiaperIcon(diaper.type) as any} size={20} color={getDiaperColor(diaper.type)} />
@@ -279,8 +285,8 @@ export default function DiapersScreen() {
                   {diaper.notes && <Text style={styles.cardNotes}>{diaper.notes}</Text>}
                 </View>
               </View>
-            </SwipeableRow>
-          ))
+            )}
+          />
         )}
         <View style={{ height: 80 }} />
       </ScrollView>

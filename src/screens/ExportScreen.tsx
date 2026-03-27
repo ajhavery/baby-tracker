@@ -9,7 +9,7 @@ import {
   getFeeds, getDiapers, getGrowthRecords,
   getTasks, getTaskCompletions, getVaccinations, getProfile,
 } from '../storage';
-import { formatDate, formatDisplayDate, formatDisplayTime } from '../utils/helpers';
+import { formatDate, formatDisplayDate, formatDisplayTime, todayIST, nowIST } from '../utils/helpers';
 import DateNavigator from '../components/DateNavigator';
 
 const COLORS = {
@@ -43,8 +43,8 @@ const REPORT_OPTIONS: ReportOption[] = [
 ];
 
 export default function ExportScreen({ navigation }: any) {
-  const today = formatDate(new Date());
-  const weekAgo = (() => { const d = new Date(); d.setDate(d.getDate() - 7); return formatDate(d); })();
+  const today = todayIST();
+  const weekAgo = (() => { const d = nowIST(); d.setDate(d.getDate() - 7); return formatDate(d); })();
 
   const [fromDate, setFromDate] = useState(weekAgo);
   const [toDate, setToDate] = useState(today);

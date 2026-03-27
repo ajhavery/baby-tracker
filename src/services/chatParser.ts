@@ -1,5 +1,5 @@
 import { FeedEntry, DiaperEntry, GrowthEntry, TaskCompletion } from '../types';
-import { generateId, formatDate } from '../utils/helpers';
+import { generateId, formatDate, nowIST, todayIST, currentTimeIST } from '../utils/helpers';
 import {
   addFeed, addDiaper, addGrowthRecord,
   getTasks, addTaskCompletion, getTaskCompletionsByDate,
@@ -48,7 +48,7 @@ function parseTime(str: string): string | null {
 
 function parseDateFromText(text: string): string {
   const lower = text.toLowerCase();
-  const today = new Date();
+  const today = nowIST();
   if (/\byesterday\b/.test(lower)) {
     const d = new Date(today); d.setDate(d.getDate() - 1); return formatDate(d);
   }
@@ -153,8 +153,7 @@ async function parseSingleEntry(text: string, date: string): Promise<ParseResult
   const lower = text.toLowerCase().trim();
   if (!lower || lower.length < 2) return { success: false, type: 'unknown', message: '' };
 
-  const now = new Date();
-  const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+  const currentTime = currentTimeIST();
 
   // ─── LATCHING ───
   if (/\b(latch|latched|breastfed?|breastfeeding|nursing|nursed|bf|latches)\b/i.test(lower)) {
@@ -373,7 +372,7 @@ export async function parseAndSave(input: string): Promise<ParseResult> {
           successCount++;
         }
       } else if (amt) {
-        const nowTime = `${new Date().getHours().toString().padStart(2, '0')}:${new Date().getMinutes().toString().padStart(2, '0')}`;
+        const nowTime = currentTimeIST();
         await addFeed({ id: generateId(), date, time: nowTime, type: 'expressed', amountMl: amt });
         results.push(`+ ${amt} mL expressed`);
         successCount++;
@@ -391,7 +390,7 @@ export async function parseAndSave(input: string): Promise<ParseResult> {
     };
   }
 
-  const dateLabel = date === formatDate(new Date()) ? 'today' : date;
+  const dateLabel = date === todayIST() ? 'today' : date;
   const parts: string[] = [];
   if (successCount > 0) parts.push(`${successCount} added`);
   if (skippedCount > 0) parts.push(`${skippedCount} duplicates skipped`);

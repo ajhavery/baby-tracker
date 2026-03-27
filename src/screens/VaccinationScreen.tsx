@@ -9,7 +9,7 @@ import { Vaccine, VaccinationRecord } from '../types';
 import { getVaccinations, addVaccination, deleteVaccination, getProfile } from '../storage';
 import { HEADER_TOP_PADDING } from '../utils/platform';
 import { triggerAutoSync } from '../services/autoSync';
-import { formatDisplayDate, generateId, getAgeDays } from '../utils/helpers';
+import { formatDisplayDate, generateId, getAgeDays, nowIST } from '../utils/helpers';
 
 const COLORS = {
   primary: '#6C63FF',
@@ -107,7 +107,7 @@ export default function VaccinationScreen({ navigation }: any) {
 
   const openMarkModal = (vaccine: Vaccine) => {
     setSelectedVaccine(vaccine);
-    const today = new Date();
+    const today = nowIST();
     setDateGiven(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`);
     setBatchNumber('');
     setAdministeredBy('');

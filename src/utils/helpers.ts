@@ -1,14 +1,42 @@
+const IST_LOCALE = 'en-IN';
+const IST_TZ = 'Asia/Kolkata';
+
+// Get current date/time in IST
+export function nowIST(): Date {
+  // Create a date string in IST and parse it back
+  const istStr = new Date().toLocaleString('en-US', { timeZone: IST_TZ });
+  return new Date(istStr);
+}
+
 export function formatDate(date: Date): string {
-  return date.toISOString().split('T')[0];
+  const y = date.getFullYear();
+  const m = (date.getMonth() + 1).toString().padStart(2, '0');
+  const d = date.getDate().toString().padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+// Today's date in IST (not UTC)
+export function todayIST(): string {
+  return formatDate(nowIST());
 }
 
 export function formatTime(date: Date): string {
-  return date.toTimeString().slice(0, 5);
+  return date.toLocaleTimeString('en-US', {
+    timeZone: IST_TZ,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+}
+
+export function currentTimeIST(): string {
+  const now = nowIST();
+  return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 }
 
 export function formatDisplayDate(dateStr: string): string {
   const date = new Date(dateStr + 'T00:00:00');
-  return date.toLocaleDateString('en-IN', {
+  return date.toLocaleDateString(IST_LOCALE, {
     weekday: 'short',
     day: 'numeric',
     month: 'short',
@@ -29,7 +57,7 @@ export function generateId(): string {
 
 export function getAgeDays(dob: string): number {
   const birth = new Date(dob + 'T00:00:00');
-  const now = new Date();
+  const now = nowIST();
   return Math.floor((now.getTime() - birth.getTime()) / (1000 * 60 * 60 * 24));
 }
 
