@@ -72,6 +72,12 @@ export async function addFeed(entry: FeedEntry): Promise<void> {
   feeds.push(entry);
   await saveItems(KEYS.FEEDS, feeds);
 }
+export async function updateFeed(updated: FeedEntry): Promise<void> {
+  const feeds = await getFeeds();
+  const idx = feeds.findIndex((f) => f.id === updated.id);
+  if (idx >= 0) feeds[idx] = updated;
+  await saveItems(KEYS.FEEDS, feeds);
+}
 export async function deleteFeed(id: string): Promise<void> {
   const feeds = await getFeeds();
   await saveItems(KEYS.FEEDS, feeds.filter((f) => f.id !== id));

@@ -12,7 +12,7 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { FeedEntry, FeedType } from '../types';
-import { getFeedsByDate, addFeed, deleteFeed } from '../storage';
+import { getFeedsByDate, addFeed, updateFeed, deleteFeed } from '../storage';
 import { HEADER_TOP_PADDING } from '../utils/platform';
 import { triggerAutoSync } from '../services/autoSync';
 import { formatDate, formatDisplayDate, formatDisplayTime, generateId } from '../utils/helpers';
@@ -38,6 +38,7 @@ export default function FeedsScreen() {
   const [timeMinute, setTimeMinute] = useState('');
   const [endHour, setEndHour] = useState('');
   const [endMinute, setEndMinute] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const loadFeeds = useCallback(async () => {
     const data = await getFeedsByDate(selectedDate);
@@ -60,6 +61,7 @@ export default function FeedsScreen() {
 
   const openAddModal = () => {
     const now = new Date();
+    setEditingId(null);
     setTimeHour(now.getHours().toString().padStart(2, '0'));
     setTimeMinute(now.getMinutes().toString().padStart(2, '0'));
     setEndHour('');
@@ -69,21 +71,41 @@ export default function FeedsScreen() {
     setShowModal(true);
   };
 
+  const openEditModal = (feed: FeedEntry) => {
+    setEditingId(feed.id);
+    setFeedType(feed.type);
+    const [h, m] = feed.time.split(':');
+    setTimeHour(h);
+    setTimeMinute(m);
+    if (feed.type === 'expressed') {
+      setAmountMl(feed.amountMl?.toString() || '');
+      setEndHour('');
+      setEndMinute('');
+    } else {
+      setAmountMl('');
+      if (feed.endTime) {
+        const [eh, em] = feed.endTime.split(':');
+        setEndHour(eh);
+        setEndMinute(em);
+      } else {
+        setEndHour('');
+        setEndMinute('');
+      }
+    }
+    setShowModal(true);
+  };
+
   const handleSave = async () => {
     const time = `${timeHour.padStart(2, '0')}:${timeMinute.padStart(2, '0')}`;
+    const id = editingId || generateId();
 
     if (feedType === 'expressed') {
       if (!amountMl || isNaN(Number(amountMl))) {
         Alert.alert('Error', 'Please enter a valid amount in mL');
         return;
       }
-      await addFeed({
-        id: generateId(),
-        date: selectedDate,
-        time,
-        type: 'expressed',
-        amountMl: Number(amountMl),
-      });
+      const entry: FeedEntry = { id, date: selectedDate, time, type: 'expressed', amountMl: Number(amountMl) };
+      editingId ? await updateFeed(entry) : await addFeed(entry);
     } else {
       const endTime = endHour && endMinute
         ? `${endHour.padStart(2, '0')}:${endMinute.padStart(2, '0')}`
@@ -94,18 +116,12 @@ export default function FeedsScreen() {
         const endMins = Number(endHour) * 60 + Number(endMinute);
         duration = endMins - startMins;
       }
-      await addFeed({
-        id: generateId(),
-        date: selectedDate,
-        time,
-        type: 'latched',
-        startTime: time,
-        endTime,
-        durationMinutes: duration,
-      });
+      const entry: FeedEntry = { id, date: selectedDate, time, type: 'latched', startTime: time, endTime, durationMinutes: duration };
+      editingId ? await updateFeed(entry) : await addFeed(entry);
     }
 
     setShowModal(false);
+    setEditingId(null);
     loadFeeds();
     triggerAutoSync();
   };
@@ -169,6 +185,7 @@ export default function FeedsScreen() {
             <TouchableOpacity
               key={feed.id}
               style={styles.feedCard}
+              onPress={() => openEditModal(feed)}
               onLongPress={() => handleDelete(feed.id)}
             >
               <View
@@ -210,7 +227,7 @@ export default function FeedsScreen() {
       <Modal visible={showModal} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Add Feed</Text>
+            <Text style={styles.modalTitle}>{editingId ? 'Edit Feed' : 'Add Feed'}</Text>
 
             {/* Feed Type Toggle */}
             <View style={styles.toggleRow}>

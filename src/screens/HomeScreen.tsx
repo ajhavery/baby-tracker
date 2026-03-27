@@ -8,6 +8,7 @@ import {
   RefreshControl,
   Alert,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -129,6 +130,22 @@ export default function HomeScreen({ navigation }: any) {
           ) : null}
         </View>
         <View style={styles.headerActions}>
+          {Platform.OS === 'web' && (
+            <TouchableOpacity
+              style={[styles.syncButton, { backgroundColor: '#F0F0F0' }]}
+              onPress={() => {
+                if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+                  navigator.serviceWorker.getRegistrations().then((regs) => {
+                    regs.forEach((r) => r.unregister());
+                  });
+                  caches.keys().then((keys) => keys.forEach((k) => caches.delete(k)));
+                }
+                window.location.reload();
+              }}
+            >
+              <Ionicons name="refresh" size={18} color={COLORS.textLight} />
+            </TouchableOpacity>
+          )}
           <TouchableOpacity
             style={[
               styles.syncButton,
@@ -182,31 +199,31 @@ export default function HomeScreen({ navigation }: any) {
         </TouchableOpacity>
       </View>
 
-      {/* Summary Cards */}
+      {/* Summary Cards - tap to go to respective tab */}
       <View style={styles.summaryRow}>
-        <View style={[styles.summaryCard, { backgroundColor: '#EBF5FB' }]}>
+        <TouchableOpacity style={[styles.summaryCard, { backgroundColor: '#EBF5FB' }]} onPress={() => navigation.navigate('Feeds')}>
           <Ionicons name="water" size={28} color={COLORS.accent3} />
           <Text style={styles.summaryValue}>{totalExpressed} mL</Text>
           <Text style={styles.summaryLabel}>Expressed</Text>
-        </View>
-        <View style={[styles.summaryCard, { backgroundColor: '#FEF9E7' }]}>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.summaryCard, { backgroundColor: '#FEF9E7' }]} onPress={() => navigation.navigate('Feeds')}>
           <Ionicons name="heart" size={28} color={COLORS.accent2} />
           <Text style={styles.summaryValue}>{latchSessions.length}x ({totalLatchMinutes}m)</Text>
           <Text style={styles.summaryLabel}>Latched</Text>
-        </View>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.summaryRow}>
-        <View style={[styles.summaryCard, { backgroundColor: '#E8F8F5' }]}>
+        <TouchableOpacity style={[styles.summaryCard, { backgroundColor: '#E8F8F5' }]} onPress={() => navigation.navigate('Diapers')}>
           <Ionicons name="water-outline" size={28} color={COLORS.accent1} />
           <Text style={styles.summaryValue}>{urineCount}</Text>
           <Text style={styles.summaryLabel}>Urine</Text>
-        </View>
-        <View style={[styles.summaryCard, { backgroundColor: '#FDEDEC' }]}>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.summaryCard, { backgroundColor: '#FDEDEC' }]} onPress={() => navigation.navigate('Diapers')}>
           <Ionicons name="ellipse" size={28} color={COLORS.secondary} />
           <Text style={styles.summaryValue}>{pottyCount}</Text>
           <Text style={styles.summaryLabel}>Potty</Text>
-        </View>
+        </TouchableOpacity>
       </View>
 
       {/* Quick Actions */}
