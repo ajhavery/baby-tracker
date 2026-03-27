@@ -1,4 +1,4 @@
-export type FeedType = 'expressed' | 'latched';
+export type FeedType = 'expressed' | 'latched' | 'formula';
 
 export interface FeedEntry {
   id: string;

@@ -102,6 +102,9 @@ export default function HomeScreen({ navigation }: any) {
   const totalExpressed = feeds
     .filter((f) => f.type === 'expressed')
     .reduce((sum, f) => sum + (f.amountMl || 0), 0);
+  const totalFormula = feeds
+    .filter((f) => f.type === 'formula')
+    .reduce((sum, f) => sum + (f.amountMl || 0), 0);
   const latchSessions = feeds.filter((f) => f.type === 'latched');
   const totalLatchMinutes = latchSessions.reduce((sum, f) => sum + (f.durationMinutes || 0), 0);
   const urineCount = diapers.filter((d) => d.type === 'urine' || d.type === 'both').length;
@@ -201,6 +204,17 @@ export default function HomeScreen({ navigation }: any) {
         </TouchableOpacity>
       </View>
 
+      {totalFormula > 0 && (
+        <View style={styles.summaryRow}>
+          <TouchableOpacity style={[styles.summaryCard, { backgroundColor: '#FDEDEC' }]} onPress={() => navigation.navigate('Feeds')}>
+            <Ionicons name="flask" size={28} color={COLORS.secondary} />
+            <Text style={styles.summaryValue}>{totalFormula} mL</Text>
+            <Text style={styles.summaryLabel}>Formula</Text>
+          </TouchableOpacity>
+          <View style={[styles.summaryCard, { backgroundColor: 'transparent', shadowOpacity: 0 }]} />
+        </View>
+      )}
+
       <View style={styles.summaryRow}>
         <TouchableOpacity style={[styles.summaryCard, { backgroundColor: '#E8F8F5' }]} onPress={() => navigation.navigate('Diapers')}>
           <Ionicons name="water-outline" size={28} color={COLORS.accent1} />
@@ -255,13 +269,22 @@ export default function HomeScreen({ navigation }: any) {
             <View
               style={[
                 styles.timelineDot,
-                { backgroundColor: feed.type === 'expressed' ? COLORS.accent3 : COLORS.accent2 },
+                {
+                  backgroundColor:
+                    feed.type === 'expressed' ? COLORS.accent3
+                    : feed.type === 'formula' ? COLORS.secondary
+                    : COLORS.accent2,
+                },
               ]}
             />
             <View style={styles.timelineContent}>
               {feed.type === 'expressed' ? (
                 <Text style={styles.timelineText}>
                   Expressed milk - <Text style={styles.bold}>{feed.amountMl} mL</Text>
+                </Text>
+              ) : feed.type === 'formula' ? (
+                <Text style={styles.timelineText}>
+                  Formula milk - <Text style={styles.bold}>{feed.amountMl} mL</Text>
                 </Text>
               ) : (
                 <Text style={styles.timelineText}>

@@ -137,7 +137,7 @@ function extractHeadCirc(text: string): number | null {
 
 // ─── Duplicate detection ───
 
-async function isDuplicateFeed(date: string, time: string, type: 'expressed' | 'latched', amountMl?: number): Promise<boolean> {
+async function isDuplicateFeed(date: string, time: string, type: string, amountMl?: number): Promise<boolean> {
   const feeds = await getFeedsByDate(date);
   return feeds.some((f) => f.time === time && f.type === type && (type === 'latched' || f.amountMl === amountMl));
 }
@@ -188,16 +188,19 @@ async function parseSingleEntry(text: string, date: string): Promise<ParseResult
     return { success: true, type: 'feed_latched', message: `Latched ${timeText}${durationText ? ` (${durationText})` : ''}` };
   }
 
-  // ─── EXPRESSED MILK ───
+  // ─── EXPRESSED / FORMULA MILK ───
   const amount = extractAmount(text);
+  const isFormula = /\b(formula)\b/i.test(lower);
   if (amount || /\b(expressed|bottle|pumped|formula)\b/i.test(lower)) {
     if (amount) {
       const time = extractSingleTime(text) || currentTime;
-      if (await isDuplicateFeed(date, time, 'expressed', amount)) {
+      const feedType = isFormula ? 'formula' as const : 'expressed' as const;
+      if (await isDuplicateFeed(date, time, feedType, amount)) {
         return { success: true, type: 'feed_expressed', message: `${amount} mL at ${time} (already exists, skipped)` };
       }
-      await addFeed({ id: generateId(), date, time, type: 'expressed', amountMl: amount });
-      return { success: true, type: 'feed_expressed', message: `${amount} mL expressed at ${time}` };
+      await addFeed({ id: generateId(), date, time, type: feedType, amountMl: amount });
+      const label = isFormula ? 'formula' : 'expressed';
+      return { success: true, type: 'feed_expressed', message: `${amount} mL ${label} at ${time}` };
     }
   }
 

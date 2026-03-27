@@ -93,12 +93,12 @@ export default function FeedsScreen() {
     const time = `${timeHour.padStart(2, '0')}:${timeMinute.padStart(2, '0')}`;
     const id = editingId || generateId();
 
-    if (feedType === 'expressed') {
+    if (feedType === 'expressed' || feedType === 'formula') {
       if (!amountMl || isNaN(Number(amountMl))) {
         Alert.alert('Error', 'Please enter a valid amount in mL');
         return;
       }
-      const entry: FeedEntry = { id, date: selectedDate, time, type: 'expressed', amountMl: Number(amountMl) };
+      const entry: FeedEntry = { id, date: selectedDate, time, type: feedType, amountMl: Number(amountMl) };
       editingId ? await updateFeed(entry) : await addFeed(entry);
     } else {
       const endTime = endHour && endMinute
@@ -138,6 +138,9 @@ export default function FeedsScreen() {
   const totalExpressed = feeds
     .filter((f) => f.type === 'expressed')
     .reduce((sum, f) => sum + (f.amountMl || 0), 0);
+  const totalFormula = feeds
+    .filter((f) => f.type === 'formula')
+    .reduce((sum, f) => sum + (f.amountMl || 0), 0);
   const latchCount = feeds.filter((f) => f.type === 'latched').length;
   const totalLatchMins = feeds
     .filter((f) => f.type === 'latched')
@@ -154,10 +157,15 @@ export default function FeedsScreen() {
       {/* Summary */}
       <View style={styles.summaryRow}>
         <View style={styles.summaryChip}>
-          <Text style={styles.chipText}>Total: {totalExpressed} mL expressed</Text>
+          <Text style={styles.chipText}>{totalExpressed} mL expressed</Text>
         </View>
+        {totalFormula > 0 && (
+          <View style={[styles.summaryChip, { backgroundColor: '#FF658415' }]}>
+            <Text style={[styles.chipText, { color: '#FF6584' }]}>{totalFormula} mL formula</Text>
+          </View>
+        )}
         <View style={styles.summaryChip}>
-          <Text style={styles.chipText}>{latchCount}x latched ({totalLatchMins} min)</Text>
+          <Text style={styles.chipText}>{latchCount}x latched ({totalLatchMins}m)</Text>
         </View>
       </View>
 
@@ -178,13 +186,20 @@ export default function FeedsScreen() {
                 <View
                   style={[
                     styles.feedDot,
-                    { backgroundColor: feed.type === 'expressed' ? COLORS.accent3 : COLORS.accent2 },
+                    {
+                      backgroundColor:
+                        feed.type === 'expressed' ? COLORS.accent3
+                        : feed.type === 'formula' ? COLORS.secondary
+                        : COLORS.accent2,
+                    },
                   ]}
                 />
                 <View style={styles.feedContent}>
                   <Text style={styles.feedTime}>{formatDisplayTime(feed.time)}</Text>
                   {feed.type === 'expressed' ? (
                     <Text style={styles.feedDetail}>Expressed milk - {feed.amountMl} mL</Text>
+                  ) : feed.type === 'formula' ? (
+                    <Text style={styles.feedDetail}>Formula milk - {feed.amountMl} mL</Text>
                   ) : (
                     <Text style={styles.feedDetail}>
                       Latched {feed.durationMinutes ? `for ${feed.durationMinutes} mins` : ''}
@@ -196,7 +211,7 @@ export default function FeedsScreen() {
                 </View>
                 <View style={styles.feedTypeTag}>
                   <Text style={styles.feedTypeText}>
-                    {feed.type === 'expressed' ? 'Bottle' : 'Latch'}
+                    {feed.type === 'expressed' ? 'Bottle' : feed.type === 'formula' ? 'Formula' : 'Latch'}
                   </Text>
                 </View>
               </View>
@@ -219,38 +234,21 @@ export default function FeedsScreen() {
 
             {/* Feed Type Toggle */}
             <View style={styles.toggleRow}>
-              <TouchableOpacity
-                style={[
-                  styles.toggleBtn,
-                  feedType === 'expressed' && styles.toggleActive,
-                ]}
-                onPress={() => setFeedType('expressed')}
-              >
-                <Text
-                  style={[
-                    styles.toggleText,
-                    feedType === 'expressed' && styles.toggleTextActive,
-                  ]}
+              {([
+                { key: 'expressed' as FeedType, label: 'Expressed' },
+                { key: 'formula' as FeedType, label: 'Formula' },
+                { key: 'latched' as FeedType, label: 'Latched' },
+              ]).map(({ key, label }) => (
+                <TouchableOpacity
+                  key={key}
+                  style={[styles.toggleBtn, feedType === key && styles.toggleActive]}
+                  onPress={() => setFeedType(key)}
                 >
-                  Expressed Milk
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.toggleBtn,
-                  feedType === 'latched' && styles.toggleActive,
-                ]}
-                onPress={() => setFeedType('latched')}
-              >
-                <Text
-                  style={[
-                    styles.toggleText,
-                    feedType === 'latched' && styles.toggleTextActive,
-                  ]}
-                >
-                  Latched
-                </Text>
-              </TouchableOpacity>
+                  <Text style={[styles.toggleText, feedType === key && styles.toggleTextActive]}>
+                    {label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
             </View>
 
             {/* Time Input */}
@@ -277,7 +275,7 @@ export default function FeedsScreen() {
               />
             </View>
 
-            {feedType === 'expressed' ? (
+            {feedType === 'expressed' || feedType === 'formula' ? (
               <>
                 <Text style={styles.inputLabel}>Amount (mL)</Text>
                 <TextInput
