@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, Alert, Modal,
+  TextInput, Alert, Modal, RefreshControl,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -34,6 +34,7 @@ export default function TasksScreen() {
   const [taskName, setTaskName] = useState('');
   const [taskDesc, setTaskDesc] = useState('');
   const [taskTime, setTaskTime] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
   const loadData = useCallback(async () => {
     const [t, c] = await Promise.all([
@@ -45,6 +46,12 @@ export default function TasksScreen() {
   }, [selectedDate]);
 
   useFocusEffect(useCallback(() => { loadData(); }, [loadData]));
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  };
 
   const isToday = selectedDate === formatDate(new Date());
 
@@ -138,7 +145,7 @@ export default function TasksScreen() {
       )}
 
       {/* Task List */}
-      <ScrollView style={styles.list}>
+      <ScrollView style={styles.list} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         {tasks.length === 0 ? (
           <View style={styles.emptyCard}>
             <Ionicons name="checkmark-circle-outline" size={48} color="#ddd" />

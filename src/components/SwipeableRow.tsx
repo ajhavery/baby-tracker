@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Alert, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 interface Props {
@@ -10,6 +10,28 @@ interface Props {
 
 export default function SwipeableRow({ children, onEdit, onDelete }: Props) {
   const [showActions, setShowActions] = useState(false);
+
+  const handleDelete = () => {
+    setShowActions(false);
+    // Small delay to let modal close before showing alert
+    setTimeout(() => {
+      if (Platform.OS === 'web') {
+        if (window.confirm('Delete this entry?')) {
+          onDelete?.();
+        }
+      } else {
+        Alert.alert('Delete', 'Delete this entry?', [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Delete', style: 'destructive', onPress: () => onDelete?.() },
+        ]);
+      }
+    }, 100);
+  };
+
+  const handleEdit = () => {
+    setShowActions(false);
+    setTimeout(() => onEdit?.(), 100);
+  };
 
   return (
     <>
@@ -22,16 +44,14 @@ export default function SwipeableRow({ children, onEdit, onDelete }: Props) {
       </TouchableOpacity>
 
       <Modal visible={showActions} transparent animationType="fade">
-        <TouchableOpacity
-          style={styles.overlay}
-          activeOpacity={1}
-          onPress={() => setShowActions(false)}
-        >
+        <View style={styles.overlay}>
+          <TouchableOpacity
+            style={styles.overlayDismiss}
+            activeOpacity={1}
+            onPress={() => setShowActions(false)}
+          />
           <View style={styles.actionSheet}>
-            <TouchableOpacity
-              style={styles.actionItem}
-              onPress={() => { setShowActions(false); onEdit?.(); }}
-            >
+            <TouchableOpacity style={styles.actionItem} onPress={handleEdit}>
               <View style={[styles.actionIcon, { backgroundColor: '#6C63FF18' }]}>
                 <Ionicons name="create-outline" size={22} color="#6C63FF" />
               </View>
@@ -40,10 +60,7 @@ export default function SwipeableRow({ children, onEdit, onDelete }: Props) {
 
             <View style={styles.divider} />
 
-            <TouchableOpacity
-              style={styles.actionItem}
-              onPress={() => { setShowActions(false); onDelete?.(); }}
-            >
+            <TouchableOpacity style={styles.actionItem} onPress={handleDelete}>
               <View style={[styles.actionIcon, { backgroundColor: '#FF658418' }]}>
                 <Ionicons name="trash-outline" size={22} color="#FF6584" />
               </View>
@@ -59,7 +76,7 @@ export default function SwipeableRow({ children, onEdit, onDelete }: Props) {
               <Text style={styles.cancelText}>Cancel</Text>
             </TouchableOpacity>
           </View>
-        </TouchableOpacity>
+        </View>
       </Modal>
     </>
   );
@@ -73,6 +90,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'flex-end',
+  },
+  overlayDismiss: {
+    flex: 1,
   },
   actionSheet: {
     backgroundColor: '#FFFFFF',

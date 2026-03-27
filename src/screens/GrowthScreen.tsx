@@ -8,6 +8,7 @@ import {
   TextInput,
   Alert,
   Modal,
+  RefreshControl,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -34,6 +35,7 @@ export default function GrowthScreen({ navigation }: any) {
   const [height, setHeight] = useState('');
   const [headCirc, setHeadCirc] = useState('');
   const [notes, setNotes] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
   const loadRecords = useCallback(async () => {
     const data = await getGrowthRecords();
@@ -89,6 +91,12 @@ export default function GrowthScreen({ navigation }: any) {
     ]);
   };
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadRecords();
+    setRefreshing(false);
+  };
+
   const latestRecord = records[0];
 
   return (
@@ -134,7 +142,7 @@ export default function GrowthScreen({ navigation }: any) {
 
       {/* History */}
       <Text style={[styles.sectionTitle, { paddingHorizontal: 20, marginTop: 20 }]}>History</Text>
-      <ScrollView style={styles.list}>
+      <ScrollView style={styles.list} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         {records.length === 0 ? (
           <View style={styles.emptyCard}>
             <Ionicons name="trending-up-outline" size={48} color="#ddd" />

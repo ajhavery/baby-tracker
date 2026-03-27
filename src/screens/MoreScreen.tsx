@@ -36,6 +36,7 @@ const MENU_ITEMS: MenuItem[] = [
   { icon: 'trending-up', label: 'Growth', subtitle: 'Weight, height, head circumference', color: COLORS.accent2, screen: 'Growth' },
   { icon: 'medical', label: 'Vaccinations', subtitle: 'Immunization schedule & records', color: COLORS.secondary, screen: 'Vaccinations' },
   { icon: 'camera', label: 'Photos & Videos', subtitle: 'Capture and upload to Google Drive', color: COLORS.accent3, screen: 'Media' },
+  { icon: 'download-outline', label: 'Export Report', subtitle: 'Generate and share reports', color: COLORS.accent1, screen: 'Export' },
   { icon: 'person-circle', label: 'Baby Profile', subtitle: 'Name, DOB, blood group', color: COLORS.primary, screen: 'Profile' },
 ];
 

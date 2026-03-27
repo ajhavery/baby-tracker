@@ -8,6 +8,7 @@ import {
   TextInput,
   Alert,
   Modal,
+  RefreshControl,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -33,6 +34,7 @@ const COLORS = {
 export default function FeedsScreen() {
   const [selectedDate, setSelectedDate] = useState(formatDate(new Date()));
   const [feeds, setFeeds] = useState<FeedEntry[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [feedType, setFeedType] = useState<FeedType>('expressed');
   const [amountMl, setAmountMl] = useState('');
@@ -120,19 +122,16 @@ export default function FeedsScreen() {
     triggerAutoSync();
   };
 
-  const handleDelete = (id: string) => {
-    Alert.alert('Delete', 'Remove this feed entry?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          await deleteFeed(id);
-          loadFeeds();
-          triggerAutoSync();
-        },
-      },
-    ]);
+  const handleDelete = async (id: string) => {
+    await deleteFeed(id);
+    loadFeeds();
+    triggerAutoSync();
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadFeeds();
+    setRefreshing(false);
   };
 
   const totalExpressed = feeds
@@ -170,7 +169,7 @@ export default function FeedsScreen() {
       </View>
 
       {/* Feed List */}
-      <ScrollView style={styles.list}>
+      <ScrollView style={styles.list} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         {feeds.length === 0 ? (
           <View style={styles.emptyCard}>
             <Text style={styles.emptyText}>No feeds recorded</Text>

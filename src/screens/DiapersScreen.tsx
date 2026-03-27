@@ -11,6 +11,7 @@ import {
   Image,
   Platform,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -51,6 +52,7 @@ export default function DiapersScreen() {
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const loadDiapers = useCallback(async () => {
     const data = await getDiapersByDate(selectedDate);
@@ -197,19 +199,16 @@ export default function DiapersScreen() {
     triggerAutoSync();
   };
 
-  const handleDelete = (id: string) => {
-    Alert.alert('Delete', 'Remove this diaper entry?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          await deleteDiaper(id);
-          loadDiapers();
-          triggerAutoSync();
-        },
-      },
-    ]);
+  const handleDelete = async (id: string) => {
+    await deleteDiaper(id);
+    loadDiapers();
+    triggerAutoSync();
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadDiapers();
+    setRefreshing(false);
   };
 
   const urineCount = diapers.filter((d) => d.type === 'urine' || d.type === 'both').length;
@@ -255,7 +254,7 @@ export default function DiapersScreen() {
       </View>
 
       {/* Diaper List */}
-      <ScrollView style={styles.list}>
+      <ScrollView style={styles.list} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         {diapers.length === 0 ? (
           <View style={styles.emptyCard}>
             <Ionicons name="layers-outline" size={48} color="#ddd" />
