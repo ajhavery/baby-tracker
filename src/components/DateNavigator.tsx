@@ -73,11 +73,12 @@ export default function DateNavigator({ selectedDate, onDateChange, style }: Pro
 
       {/* Date Picker Modal */}
       <Modal visible={showPicker} transparent animationType="fade">
-        <TouchableOpacity
-          style={styles.overlay}
-          activeOpacity={1}
-          onPress={() => setShowPicker(false)}
-        >
+        <View style={styles.overlay}>
+          <TouchableOpacity
+            style={styles.overlayDismiss}
+            activeOpacity={1}
+            onPress={() => setShowPicker(false)}
+          />
           <View style={styles.pickerSheet}>
             <Text style={styles.pickerTitle}>Select Date</Text>
 
@@ -148,7 +149,7 @@ export default function DateNavigator({ selectedDate, onDateChange, style }: Pro
               </TouchableOpacity>
             </View>
           </View>
-        </TouchableOpacity>
+        </View>
       </Modal>
     </>
   );
@@ -183,6 +184,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'flex-end',
+  },
+  overlayDismiss: {
+    flex: 1,
   },
   pickerSheet: {
     backgroundColor: COLORS.card,
