@@ -15,7 +15,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { FeedEntry, DiaperEntry } from '../types';
 import { getFeedsByDate, getDiapersByDate, getProfile, seedSampleData } from '../storage';
 import { HEADER_TOP_PADDING } from '../utils/platform';
-import { formatDate, formatDisplayDate, formatDisplayTime, getAgeString } from '../utils/helpers';
+import { formatDate, formatDisplayTime, getAgeString } from '../utils/helpers';
+import DateNavigator from '../components/DateNavigator';
 import { getStoredToken } from '../services/googleDrive';
 import { fullSync, getLastSyncTime } from '../services/syncService';
 
@@ -106,12 +107,6 @@ export default function HomeScreen({ navigation }: any) {
   const urineCount = diapers.filter((d) => d.type === 'urine' || d.type === 'both').length;
   const pottyCount = diapers.filter((d) => d.type === 'potty' || d.type === 'both').length;
 
-  const changeDate = (offset: number) => {
-    const d = new Date(selectedDate + 'T00:00:00');
-    d.setDate(d.getDate() + offset);
-    setSelectedDate(formatDate(d));
-  };
-
   const isToday = selectedDate === formatDate(new Date());
 
   return (
@@ -186,18 +181,11 @@ export default function HomeScreen({ navigation }: any) {
         </TouchableOpacity>
       )}
 
-      {/* Date Navigator */}
-      <View style={styles.dateNav}>
-        <TouchableOpacity onPress={() => changeDate(-1)}>
-          <Ionicons name="chevron-back" size={24} color={COLORS.primary} />
-        </TouchableOpacity>
-        <Text style={styles.dateText}>
-          {isToday ? 'Today' : ''} {formatDisplayDate(selectedDate)}
-        </Text>
-        <TouchableOpacity onPress={() => changeDate(1)} disabled={isToday}>
-          <Ionicons name="chevron-forward" size={24} color={isToday ? '#ccc' : COLORS.primary} />
-        </TouchableOpacity>
-      </View>
+      <DateNavigator
+        selectedDate={selectedDate}
+        onDateChange={setSelectedDate}
+        style={styles.dateNav}
+      />
 
       {/* Summary Cards - tap to go to respective tab */}
       <View style={styles.summaryRow}>

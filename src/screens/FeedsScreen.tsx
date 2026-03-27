@@ -16,7 +16,8 @@ import SwipeableRow from '../components/SwipeableRow';
 import { getFeedsByDate, addFeed, updateFeed, deleteFeed } from '../storage';
 import { HEADER_TOP_PADDING } from '../utils/platform';
 import { triggerAutoSync } from '../services/autoSync';
-import { formatDate, formatDisplayDate, formatDisplayTime, generateId } from '../utils/helpers';
+import { formatDate, formatDisplayTime, generateId } from '../utils/helpers';
+import DateNavigator from '../components/DateNavigator';
 
 const COLORS = {
   primary: '#6C63FF',
@@ -51,14 +52,6 @@ export default function FeedsScreen() {
       loadFeeds();
     }, [loadFeeds])
   );
-
-  const changeDate = (offset: number) => {
-    const d = new Date(selectedDate + 'T00:00:00');
-    d.setDate(d.getDate() + offset);
-    setSelectedDate(formatDate(d));
-  };
-
-  const isToday = selectedDate === formatDate(new Date());
 
   const openAddModal = () => {
     const now = new Date();
@@ -152,18 +145,11 @@ export default function FeedsScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Date Navigator */}
-      <View style={styles.dateNav}>
-        <TouchableOpacity onPress={() => changeDate(-1)}>
-          <Ionicons name="chevron-back" size={24} color={COLORS.primary} />
-        </TouchableOpacity>
-        <Text style={styles.dateText}>
-          {isToday ? 'Today - ' : ''}{formatDisplayDate(selectedDate)}
-        </Text>
-        <TouchableOpacity onPress={() => changeDate(1)} disabled={isToday}>
-          <Ionicons name="chevron-forward" size={24} color={isToday ? '#ccc' : COLORS.primary} />
-        </TouchableOpacity>
-      </View>
+      <DateNavigator
+        selectedDate={selectedDate}
+        onDateChange={setSelectedDate}
+        style={styles.dateNav}
+      />
 
       {/* Summary */}
       <View style={styles.summaryRow}>
