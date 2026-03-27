@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Platform,
+  View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Platform, Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { formatDate, formatDisplayDate } from '../utils/helpers';
+import { formatDate } from '../utils/helpers';
 
 const COLORS = {
   primary: '#6C63FF',
@@ -19,6 +19,14 @@ interface Props {
   style?: any;
 }
 
+// Shorter date format that fits on screen
+function shortDate(dateStr: string): string {
+  const d = new Date(dateStr + 'T00:00:00');
+  const day = d.getDate();
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return `${day} ${months[d.getMonth()]}`;
+}
+
 export default function DateNavigator({ selectedDate, onDateChange, style }: Props) {
   const [showPicker, setShowPicker] = useState(false);
   const [pickerValue, setPickerValue] = useState(selectedDate);
@@ -30,7 +38,6 @@ export default function DateNavigator({ selectedDate, onDateChange, style }: Pro
     const d = new Date(selectedDate + 'T00:00:00');
     d.setDate(d.getDate() + offset);
     const newDate = formatDate(d);
-    // Don't go beyond today
     if (newDate <= today) {
       onDateChange(newDate);
     }
@@ -42,24 +49,31 @@ export default function DateNavigator({ selectedDate, onDateChange, style }: Pro
   };
 
   const handlePickerDone = () => {
-    if (pickerValue && pickerValue <= today) {
-      onDateChange(pickerValue);
+    if (!pickerValue || !pickerValue.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      Alert.alert('Invalid', 'Enter date as YYYY-MM-DD');
+      return;
     }
+    if (pickerValue > today) {
+      Alert.alert('Invalid', 'Cannot select a future date');
+      return;
+    }
+    onDateChange(pickerValue);
     setShowPicker(false);
   };
+
+  // Display label
+  const dateLabel = isToday ? `Today, ${shortDate(selectedDate)}` : shortDate(selectedDate);
 
   return (
     <>
       <View style={[styles.container, style]}>
         <TouchableOpacity onPress={() => changeDate(-1)} style={styles.arrowBtn}>
-          <Ionicons name="chevron-back" size={24} color={COLORS.primary} />
+          <Ionicons name="chevron-back" size={22} color={COLORS.primary} />
         </TouchableOpacity>
 
         <TouchableOpacity onPress={openPicker} style={styles.dateBtn}>
-          <Text style={styles.dateText}>
-            {isToday ? 'Today - ' : ''}{formatDisplayDate(selectedDate)}
-          </Text>
-          <Ionicons name="calendar-outline" size={16} color={COLORS.primary} style={{ marginLeft: 6 }} />
+          <Text style={styles.dateText} numberOfLines={1}>{dateLabel}</Text>
+          <Ionicons name="calendar-outline" size={14} color={COLORS.primary} style={{ marginLeft: 4 }} />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -67,7 +81,7 @@ export default function DateNavigator({ selectedDate, onDateChange, style }: Pro
           style={styles.arrowBtn}
           disabled={isToday}
         >
-          <Ionicons name="chevron-forward" size={24} color={isToday ? '#D0D0D0' : COLORS.primary} />
+          <Ionicons name="chevron-forward" size={22} color={isToday ? '#D0D0D0' : COLORS.primary} />
         </TouchableOpacity>
       </View>
 
@@ -87,7 +101,10 @@ export default function DateNavigator({ selectedDate, onDateChange, style }: Pro
                 type="date"
                 value={pickerValue}
                 max={today}
-                onChange={(e: any) => setPickerValue(e.target.value)}
+                onChange={(e: any) => {
+                  const val = e.target.value;
+                  if (val <= today) setPickerValue(val);
+                }}
                 style={{
                   fontSize: 18,
                   padding: 14,
@@ -112,10 +129,10 @@ export default function DateNavigator({ selectedDate, onDateChange, style }: Pro
             {/* Quick date buttons */}
             <View style={styles.quickDates}>
               <TouchableOpacity
-                style={styles.quickBtn}
+                style={[styles.quickBtn, isToday && styles.quickBtnActive]}
                 onPress={() => { onDateChange(today); setShowPicker(false); }}
               >
-                <Text style={styles.quickBtnText}>Today</Text>
+                <Text style={[styles.quickBtnText, isToday && styles.quickBtnTextActive]}>Today</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.quickBtn}
@@ -160,9 +177,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
+    paddingVertical: 10,
     backgroundColor: COLORS.card,
-    gap: 8,
   },
   arrowBtn: {
     padding: 8,
@@ -174,9 +190,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 8,
     backgroundColor: COLORS.primary + '08',
+    maxWidth: 200,
   },
   dateText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
     color: COLORS.text,
   },
@@ -221,10 +238,16 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary + '10',
     alignItems: 'center',
   },
+  quickBtnActive: {
+    backgroundColor: COLORS.primary,
+  },
   quickBtnText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: COLORS.primary,
+  },
+  quickBtnTextActive: {
+    color: '#fff',
   },
   pickerButtons: {
     flexDirection: 'row',
