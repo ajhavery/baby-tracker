@@ -16,7 +16,8 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { DiaperEntry, DiaperType } from '../types';
-import { getDiapersByDate, addDiaper, deleteDiaper } from '../storage';
+import SwipeableRow from '../components/SwipeableRow';
+import { getDiapersByDate, addDiaper, updateDiaper, deleteDiaper } from '../storage';
 import { HEADER_TOP_PADDING } from '../utils/platform';
 import { triggerAutoSync } from '../services/autoSync';
 import {
@@ -45,6 +46,7 @@ export default function DiapersScreen() {
   const [timeHour, setTimeHour] = useState('');
   const [timeMinute, setTimeMinute] = useState('');
   const [notes, setNotes] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -70,10 +72,23 @@ export default function DiapersScreen() {
 
   const openAddModal = () => {
     const now = new Date();
+    setEditingId(null);
     setTimeHour(now.getHours().toString().padStart(2, '0'));
     setTimeMinute(now.getMinutes().toString().padStart(2, '0'));
     setDiaperType('urine');
     setNotes('');
+    setPhotoUri(null);
+    setPhotoFile(null);
+    setShowModal(true);
+  };
+
+  const openEditModal = (diaper: DiaperEntry) => {
+    setEditingId(diaper.id);
+    const [h, m] = diaper.time.split(':');
+    setTimeHour(h);
+    setTimeMinute(m);
+    setDiaperType(diaper.type);
+    setNotes(diaper.notes || '');
     setPhotoUri(null);
     setPhotoFile(null);
     setShowModal(true);
@@ -176,13 +191,14 @@ export default function DiapersScreen() {
       }
     }
 
-    await addDiaper({
-      id: generateId(),
+    const entry: DiaperEntry = {
+      id: editingId || generateId(),
       date: selectedDate,
       time,
       type: diaperType,
       notes: notes || undefined,
-    });
+    };
+    editingId ? await updateDiaper(entry) : await addDiaper(entry);
     setShowModal(false);
     loadDiapers();
     triggerAutoSync();
@@ -261,22 +277,24 @@ export default function DiapersScreen() {
           </View>
         ) : (
           diapers.map((diaper) => (
-            <TouchableOpacity
+            <SwipeableRow
               key={diaper.id}
-              style={styles.card}
-              onLongPress={() => handleDelete(diaper.id)}
+              onEdit={() => openEditModal(diaper)}
+              onDelete={() => handleDelete(diaper.id)}
             >
-              <View style={[styles.iconCircle, { backgroundColor: getDiaperColor(diaper.type) + '20' }]}>
-                <Ionicons name={getDiaperIcon(diaper.type) as any} size={20} color={getDiaperColor(diaper.type)} />
+              <View style={styles.card}>
+                <View style={[styles.iconCircle, { backgroundColor: getDiaperColor(diaper.type) + '20' }]}>
+                  <Ionicons name={getDiaperIcon(diaper.type) as any} size={20} color={getDiaperColor(diaper.type)} />
+                </View>
+                <View style={styles.cardContent}>
+                  <Text style={styles.cardTime}>{formatDisplayTime(diaper.time)}</Text>
+                  <Text style={styles.cardType}>
+                    {diaper.type === 'urine' ? 'Urine' : diaper.type === 'potty' ? 'Potty/Stool' : 'Both'}
+                  </Text>
+                  {diaper.notes && <Text style={styles.cardNotes}>{diaper.notes}</Text>}
+                </View>
               </View>
-              <View style={styles.cardContent}>
-                <Text style={styles.cardTime}>{formatDisplayTime(diaper.time)}</Text>
-                <Text style={styles.cardType}>
-                  {diaper.type === 'urine' ? 'Urine' : diaper.type === 'potty' ? 'Potty/Stool' : 'Both'}
-                </Text>
-                {diaper.notes && <Text style={styles.cardNotes}>{diaper.notes}</Text>}
-              </View>
-            </TouchableOpacity>
+            </SwipeableRow>
           ))
         )}
         <View style={{ height: 80 }} />
@@ -291,7 +309,7 @@ export default function DiapersScreen() {
       <Modal visible={showModal} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Log Diaper Change</Text>
+            <Text style={styles.modalTitle}>{editingId ? 'Edit Diaper Change' : 'Log Diaper Change'}</Text>
 
             {/* Type Toggle */}
             <View style={styles.toggleRow}>
@@ -424,7 +442,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.card,
     borderRadius: 12,
     padding: 14,
-    marginBottom: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.03,

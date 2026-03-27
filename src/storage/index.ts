@@ -96,6 +96,12 @@ export async function addDiaper(entry: DiaperEntry): Promise<void> {
   diapers.push(entry);
   await saveItems(KEYS.DIAPERS, diapers);
 }
+export async function updateDiaper(updated: DiaperEntry): Promise<void> {
+  const diapers = await getDiapers();
+  const idx = diapers.findIndex((d) => d.id === updated.id);
+  if (idx >= 0) diapers[idx] = updated;
+  await saveItems(KEYS.DIAPERS, diapers);
+}
 export async function deleteDiaper(id: string): Promise<void> {
   const diapers = await getDiapers();
   await saveItems(KEYS.DIAPERS, diapers.filter((d) => d.id !== id));

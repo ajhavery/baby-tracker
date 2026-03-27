@@ -12,6 +12,7 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { FeedEntry, FeedType } from '../types';
+import SwipeableRow from '../components/SwipeableRow';
 import { getFeedsByDate, addFeed, updateFeed, deleteFeed } from '../storage';
 import { HEADER_TOP_PADDING } from '../utils/platform';
 import { triggerAutoSync } from '../services/autoSync';
@@ -182,37 +183,38 @@ export default function FeedsScreen() {
           </View>
         ) : (
           feeds.map((feed) => (
-            <TouchableOpacity
+            <SwipeableRow
               key={feed.id}
-              style={styles.feedCard}
-              onPress={() => openEditModal(feed)}
-              onLongPress={() => handleDelete(feed.id)}
+              onEdit={() => openEditModal(feed)}
+              onDelete={() => handleDelete(feed.id)}
             >
-              <View
-                style={[
-                  styles.feedDot,
-                  { backgroundColor: feed.type === 'expressed' ? COLORS.accent3 : COLORS.accent2 },
-                ]}
-              />
-              <View style={styles.feedContent}>
-                <Text style={styles.feedTime}>{formatDisplayTime(feed.time)}</Text>
-                {feed.type === 'expressed' ? (
-                  <Text style={styles.feedDetail}>Expressed milk - {feed.amountMl} mL</Text>
-                ) : (
-                  <Text style={styles.feedDetail}>
-                    Latched {feed.durationMinutes ? `for ${feed.durationMinutes} mins` : ''}
-                    {feed.startTime && feed.endTime
-                      ? `\n${formatDisplayTime(feed.startTime)} - ${formatDisplayTime(feed.endTime)}`
-                      : ''}
+              <View style={styles.feedCard}>
+                <View
+                  style={[
+                    styles.feedDot,
+                    { backgroundColor: feed.type === 'expressed' ? COLORS.accent3 : COLORS.accent2 },
+                  ]}
+                />
+                <View style={styles.feedContent}>
+                  <Text style={styles.feedTime}>{formatDisplayTime(feed.time)}</Text>
+                  {feed.type === 'expressed' ? (
+                    <Text style={styles.feedDetail}>Expressed milk - {feed.amountMl} mL</Text>
+                  ) : (
+                    <Text style={styles.feedDetail}>
+                      Latched {feed.durationMinutes ? `for ${feed.durationMinutes} mins` : ''}
+                      {feed.startTime && feed.endTime
+                        ? `\n${formatDisplayTime(feed.startTime)} - ${formatDisplayTime(feed.endTime)}`
+                        : ''}
+                    </Text>
+                  )}
+                </View>
+                <View style={styles.feedTypeTag}>
+                  <Text style={styles.feedTypeText}>
+                    {feed.type === 'expressed' ? 'Bottle' : 'Latch'}
                   </Text>
-                )}
+                </View>
               </View>
-              <View style={styles.feedTypeTag}>
-                <Text style={styles.feedTypeText}>
-                  {feed.type === 'expressed' ? 'Bottle' : 'Latch'}
-                </Text>
-              </View>
-            </TouchableOpacity>
+            </SwipeableRow>
           ))
         )}
         <View style={{ height: 80 }} />
@@ -375,7 +377,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.card,
     borderRadius: 12,
     padding: 14,
-    marginBottom: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.03,
