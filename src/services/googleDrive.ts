@@ -70,19 +70,19 @@ function getRedirectUri() {
 }
 
 // Get stored token
+// Don't auto-remove expired tokens — let API calls fail and prompt re-auth.
+// Google tokens often work past their stated expiry.
 export async function getStoredToken(): Promise<string | null> {
   try {
     const data = await kvGet(STORAGE_KEY);
     if (!data) return null;
     const parsed = JSON.parse(data);
-    if (parsed.expiresAt && Date.now() > parsed.expiresAt) {
-      if (parsed.refreshToken) {
-        return await refreshAccessToken(parsed.refreshToken);
-      }
-      await kvRemove(STORAGE_KEY);
-      return null;
+    if (parsed.expiresAt && Date.now() > parsed.expiresAt && parsed.refreshToken) {
+      const refreshed = await refreshAccessToken(parsed.refreshToken);
+      if (refreshed) return refreshed;
     }
-    return parsed.accessToken;
+    // Return token even if "expired" — it may still work
+    return parsed.accessToken || null;
   } catch {
     return null;
   }

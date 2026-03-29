@@ -1,14 +1,7 @@
-const CACHE_NAME = 'baby-tracker-v1';
-const STATIC_ASSETS = [
-  '/',
-  '/manifest.json',
-];
+const CACHE_NAME = 'baby-tracker-v2';
 
-// Install: cache shell
+// Install: skip waiting to activate immediately
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
-  );
   self.skipWaiting();
 });
 
@@ -22,7 +15,7 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch: network-first for API calls, cache-first for assets
+// Fetch: network-first for app files, skip Google API calls
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
@@ -31,19 +24,16 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Network-first: try network, fall back to cache
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const fetchPromise = fetch(event.request)
-        .then((response) => {
-          if (response.ok) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-          }
-          return response;
-        })
-        .catch(() => cached);
-
-      return cached || fetchPromise;
-    })
+    fetch(event.request)
+      .then((response) => {
+        if (response.ok) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        }
+        return response;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
